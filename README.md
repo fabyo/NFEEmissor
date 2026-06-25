@@ -468,6 +468,14 @@ Exemplo:
 - O projeto aplica backoff temporário quando a SEFAZ retorna `656 - Consumo Indevido`.
 - `certs/`, `out/`, `tmp-nfe-out/`, `schemas/` e `*-procNFe.xml` são ignorados pelo Git.
 
+## 🔗 Projetos relacionados
+
+| Projeto | Descrição |
+|---|---|
+| [NFeSchemaDownloader](https://github.com/fabyo/NFeSchemaDownloader) | Mantém os Schemas XML (XSD) da SEFAZ sempre atualizados automaticamente |
+| [NFEConsulta](https://github.com/fabyo/NFEConsulta) | Consulta NF-e, valida XML e verifica status oficial da SEFAZ |
+| [NFEDanfe](https://github.com/fabyo/NFEDanfe) | Biblioteca .NET para gerar DANFE em PDF a partir de XML de NF-e autorizada. |
+
 ## Testes
 
 ```bash
@@ -477,3 +485,10 @@ docker run --rm \
   mcr.microsoft.com/dotnet/sdk:10.0 \
   dotnet test tests/Nfe.UnitTests/Nfe.UnitTests.csproj
 ```
+
+## 👨‍💻 Autor
+
+Fabyo Guimarães Oliveira
+
+- LinkedIn: [https://www.linkedin.com/in/fabyo-guimaraes/](https://www.linkedin.com/in/fabyo-guimaraes/)
+- GitHub: https://github.com/fabyo
