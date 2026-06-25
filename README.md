@@ -1,4 +1,10 @@
-# NFEEmissor
+![Logo](https://raw.githubusercontent.com/fabyo/NFEEmissor/master/logo-200.png)
+
+[![NuGet Core](https://img.shields.io/nuget/v/NFEEmissor.Core.svg)](https://www.nuget.org/packages/NFEEmissor.Core)
+[![NuGet CLI](https://img.shields.io/nuget/v/NFEEmissor.Cli.svg)](https://www.nuget.org/packages/NFEEmissor.Cli)
+[![Build](https://github.com/fabyo/NFEEmissor/actions/workflows/ci.yml/badge.svg)](https://github.com/fabyo/NFEEmissor/actions/workflows/ci.yml)
+[![Publish](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml/badge.svg)](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml)
+[![License](https://img.shields.io/github/license/fabyo/NFEEmissor)](./LICENSE)
 
 > Status: projeto em evolução. A emissão em homologação e produção já foram testadas, mas o uso em produção exige validação fiscal, jurídica e operacional no cenário da sua empresa.
 
