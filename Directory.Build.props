@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Authors>NFEEmissor contributors</Authors>
+    <Company>NFEEmissor</Company>
+    <Product>NFEEmissor</Product>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>logo-200.png</PackageIcon>
+    <RepositoryType>git</RepositoryType>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)logo-200.png" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+</Project>

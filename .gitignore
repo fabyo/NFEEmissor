@@ -1,0 +1,40 @@
+# Target folders
+bin/
+obj/
+out/
+schemas/
+tmp-nfe-out/
+artifacts/
+*.nupkg
+*-procNFe.xml
+*-nfe.xml
+*-danfe.pdf
+
+# IDE files
+.vscode/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Secrets and Certs
+certs/
+*.pfx
+*.p12
+*.pem
+*.key
+.env
+.env.*
+
+# ------------------------------
+# IDE / editor / OS
+# ------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*:Zone.Identifier

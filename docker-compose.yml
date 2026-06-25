@@ -1,0 +1,29 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: nfe-redis
+    ports:
+      - "6379:6379"
+
+  seq:
+    image: datalust/seq:latest
+    container_name: nfe-seq
+    ports:
+      - "8085:80"
+      - "5345:5341"
+    environment:
+      ACCEPT_EULAS: Y
+
+  nfe-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nfe-api
+    ports:
+      - "5000:8080" # A API externa ficará disponível na porta 5000 do localhost
+    environment:
+      - ConnectionStrings__Redis=redis:6379
+      - Seq__Url=http://seq:5341
+    depends_on:
+      - redis
+      - seq

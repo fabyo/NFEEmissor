@@ -1,0 +1,102 @@
+{
+  "ambienteEmissao": "2",
+  "serie": "1",
+  "numeroNfe": 10,
+  "naturezaOperacao": "Devolucao de Vasilhame ou Sacaria",
+  "tipoOperacao": "1",
+  "formatoImpressaoDanfe": "1",
+  "tipoEmissao": "1",
+  "finalidadeEmissao": "4",
+  "consumidorFinal": "1",
+  "indicadorPresencaComprador": "9",
+  "notasReferenciadas": [
+    "35260612345678000195550010000000011000000010"
+  ],
+  "emitente": {
+    "cnpj": "12345678000195",
+    "razaoSocial": "EMPRESA EMITENTE TESTE LTDA",
+    "nomeFantasia": "EMPRESA TESTE",
+    "inscricaoEstadual": "110042490114",
+    "cnaeFiscal": "2500000",
+    "codigoRegimeTributario": "3",
+    "endereco": {
+      "logradouro": "RUA TESTE",
+      "numero": "100",
+      "bairro": "CENTRO",
+      "codigoMunicipio": "3547809",
+      "nomeMunicipio": "SAO PAULO",
+      "uf": "SP",
+      "cep": "01001000",
+      "codigoPais": "1058",
+      "nomePais": "BRASIL",
+      "telefone": "11999999999"
+    }
+  },
+  "destinatario": {
+    "cnpj": "99999999000191",
+    "nomeRazaoSocial": "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",
+    "indicadorIe": "9",
+    "endereco": {
+      "logradouro": "AVENIDA CLIENTE",
+      "numero": "200",
+      "bairro": "JARDINS",
+      "codigoMunicipio": "3550308",
+      "nomeMunicipio": "SAO PAULO",
+      "uf": "SP",
+      "cep": "02002000",
+      "codigoPais": "1058",
+      "nomePais": "Brasil"
+    }
+  },
+  "produtos": [
+    {
+      "codigoProduto": "EB.007",
+      "codigoEan": "SEM GTIN",
+      "codigoBarra": "EB.007",
+      "descricao": "CACAMBA No2 METALICA ONDULADA 1040X959X660 VW.00001 TARA 70KG",
+      "ncmSh": "73090090",
+      "codigoBeneficioFiscal": "SP010820",
+      "cfop": "5921",
+      "unidadeComercial": "PC",
+      "quantidadeComercial": 3.0,
+      "valorUnitarioComercial": 500.0,
+      "valorBruto": 1500.0,
+      "codigoEanTributavel": "SEM GTIN",
+      "unidadeTributavel": "PC",
+      "quantidadeTributavel": 3.0,
+      "valorUnitarioTributavel": 500.0,
+      "indicadorComposicaoTotal": "1",
+      "impostos": {
+        "icms": {
+          "cst": "50",
+          "origem": "0"
+        },
+        "ipi": {
+          "cst": "53",
+          "codigoEnquadramentoLegal": "999"
+        },
+        "pis": {
+          "cst": "08"
+        },
+        "cofins": {
+          "cst": "08"
+        },
+        "ibsCbs": {
+          "cst": "410",
+          "codigoClassificacaoTributaria": "410999"
+        }
+      }
+    }
+  ],
+  "transporte": {
+    "modalidadeFrete": "9"
+  },
+  "pagamentos": [
+    {
+      "meioPagamento": "90",
+      "valor": 0.0
+    }
+  ],
+  "informacoesAdicionaisFisco": "ICMS suspenso nos termos do Artigo 82 do Anexo I do RICMS/SP (cBenef SP010820).; Operacao com nao incidencia de IBS e CBS nos termos da Lei Complementar no 214/2025, por nao configurar fato gerador de consumo (operacao nao onerosa).",
+  "informacoesAdicionais": "NF-e Ref. homologacao: serie:1 numero:1 emit:12.345.678/0001-95 em 06/2026 [35260612345678000195550010000000011000000010];Email do Destinatario: nfe@example.com; Inf. Contribuinte: Devolucao de vasilhame/recipiente recebido para acomodacao de mercadorias.;"
+}

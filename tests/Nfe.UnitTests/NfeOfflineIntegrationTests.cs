@@ -1,0 +1,150 @@
+using System.Xml;
+using NFEDanfe;
+using Nfe.Core;
+
+namespace Nfe.UnitTests;
+
+public sealed class NfeOfflineIntegrationTests
+{
+    [Fact]
+    public void NfeProcBuilder_DeveMontarProcNFeSemSefaz()
+    {
+        var xmlAssinado = CriarXmlNfeAssinadoMinimo();
+        var protNFe = CriarProtNFe();
+
+        var procNFe = NfeProcBuilder.Montar(xmlAssinado, protNFe);
+
+        var doc = new XmlDocument();
+        doc.LoadXml(procNFe);
+
+        var ns = new XmlNamespaceManager(doc.NameTable);
+        ns.AddNamespace("nfe", "http://www.portalfiscal.inf.br/nfe");
+
+        Assert.Equal("nfeProc", doc.DocumentElement!.LocalName);
+        Assert.NotNull(doc.SelectSingleNode("/nfe:nfeProc/nfe:NFe", ns));
+        Assert.NotNull(doc.SelectSingleNode("/nfe:nfeProc/nfe:protNFe", ns));
+        Assert.Equal("100", doc.SelectSingleNode("//nfe:protNFe/nfe:infProt/nfe:cStat", ns)?.InnerText);
+    }
+
+    [Fact]
+    public void Danfe_DeveGerarPdfDeProcNFeOfflineSemSefaz()
+    {
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+        var procNFe = NfeProcBuilder.Montar(CriarXmlNfeAssinadoMinimo(), CriarProtNFe());
+
+        using var pdfStream = new MemoryStream();
+        DanfeGenerator.GenerateFromXmlContent(procNFe, pdfStream);
+
+        var pdfBytes = pdfStream.ToArray();
+        Assert.True(pdfBytes.Length > 1000);
+        Assert.Equal("%PDF"u8.ToArray(), pdfBytes[..4]);
+    }
+
+    private static string CriarXmlNfeAssinadoMinimo() => """
+        <?xml version="1.0" encoding="utf-8"?>
+        <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+          <infNFe Id="NFe35260612345678000195550010000000011000000010" versao="4.00">
+            <ide>
+              <cUF>35</cUF>
+              <cNF>00000001</cNF>
+              <natOp>VENDA DE MERCADORIA</natOp>
+              <mod>55</mod>
+              <serie>1</serie>
+              <nNF>1</nNF>
+              <dhEmi>2026-06-25T10:00:00-03:00</dhEmi>
+              <tpNF>1</tpNF>
+              <idDest>1</idDest>
+              <cMunFG>3550308</cMunFG>
+              <tpImp>1</tpImp>
+              <tpEmis>1</tpEmis>
+              <cDV>0</cDV>
+              <tpAmb>2</tpAmb>
+              <finNFe>1</finNFe>
+              <indFinal>1</indFinal>
+              <indPres>9</indPres>
+              <procEmi>0</procEmi>
+              <verProc>1.0</verProc>
+            </ide>
+            <emit>
+              <CNPJ>12345678000195</CNPJ>
+              <xNome>EMPRESA EMITENTE TESTE LTDA</xNome>
+              <enderEmit>
+                <xLgr>RUA TESTE</xLgr>
+                <nro>100</nro>
+                <xBairro>CENTRO</xBairro>
+                <cMun>3550308</cMun>
+                <xMun>SAO PAULO</xMun>
+                <UF>SP</UF>
+                <CEP>01001000</CEP>
+                <cPais>1058</cPais>
+                <xPais>BRASIL</xPais>
+              </enderEmit>
+              <IE>110042490114</IE>
+              <CRT>3</CRT>
+            </emit>
+            <dest>
+              <CNPJ>99999999000191</CNPJ>
+              <xNome>NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL</xNome>
+              <enderDest>
+                <xLgr>AVENIDA CLIENTE</xLgr>
+                <nro>200</nro>
+                <xBairro>JARDINS</xBairro>
+                <cMun>3550308</cMun>
+                <xMun>SAO PAULO</xMun>
+                <UF>SP</UF>
+                <CEP>02002000</CEP>
+                <cPais>1058</cPais>
+                <xPais>Brasil</xPais>
+              </enderDest>
+              <indIEDest>9</indIEDest>
+            </dest>
+            <det nItem="1">
+              <prod>
+                <cProd>PROD-001</cProd>
+                <cEAN>SEM GTIN</cEAN>
+                <xProd>PRODUTO TESTE</xProd>
+                <NCM>73090090</NCM>
+                <CFOP>5102</CFOP>
+                <uCom>UN</uCom>
+                <qCom>1.0000</qCom>
+                <vUnCom>100</vUnCom>
+                <vProd>100.00</vProd>
+                <cEANTrib>SEM GTIN</cEANTrib>
+                <uTrib>UN</uTrib>
+                <qTrib>1.0000</qTrib>
+                <vUnTrib>100</vUnTrib>
+                <indTot>1</indTot>
+              </prod>
+              <imposto>
+                <ICMS><ICMS00><orig>0</orig><CST>00</CST><modBC>3</modBC><vBC>100.00</vBC><pICMS>18.00</pICMS><vICMS>18.00</vICMS></ICMS00></ICMS>
+                <PIS><PISAliq><CST>01</CST><vBC>100.00</vBC><pPIS>1.65</pPIS><vPIS>1.65</vPIS></PISAliq></PIS>
+                <COFINS><COFINSAliq><CST>01</CST><vBC>100.00</vBC><pCOFINS>7.60</pCOFINS><vCOFINS>7.60</vCOFINS></COFINSAliq></COFINS>
+              </imposto>
+            </det>
+            <total>
+              <ICMSTot>
+                <vBC>100.00</vBC><vICMS>18.00</vICMS><vICMSDeson>0.00</vICMSDeson><vFCP>0.00</vFCP><vBCST>0.00</vBCST><vST>0.00</vST><vFCPST>0.00</vFCPST><vFCPSTRet>0.00</vFCPSTRet><vProd>100.00</vProd><vFrete>0.00</vFrete><vSeg>0.00</vSeg><vDesc>0.00</vDesc><vII>0.00</vII><vIPI>0.00</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>1.65</vPIS><vCOFINS>7.60</vCOFINS><vOutro>0.00</vOutro><vNF>100.00</vNF>
+              </ICMSTot>
+            </total>
+            <transp><modFrete>9</modFrete></transp>
+            <pag><detPag><tPag>90</tPag><vPag>0.00</vPag></detPag></pag>
+          </infNFe>
+          <Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo /></Signature>
+        </NFe>
+        """;
+
+    private static string CriarProtNFe() => """
+        <protNFe versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+          <infProt>
+            <tpAmb>2</tpAmb>
+            <verAplic>SP_NFE_PL009_V4</verAplic>
+            <chNFe>35260612345678000195550010000000011000000010</chNFe>
+            <dhRecbto>2026-06-25T10:00:03-03:00</dhRecbto>
+            <nProt>135000000000000</nProt>
+            <digVal>AAAAAAAAAAAAAAAAAAAAAAAAAAA=</digVal>
+            <cStat>100</cStat>
+            <xMotivo>Autorizado o uso da NF-e</xMotivo>
+          </infProt>
+        </protNFe>
+        """;
+}

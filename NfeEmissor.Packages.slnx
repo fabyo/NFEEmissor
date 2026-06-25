@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Nfe.Cli/Nfe.Cli.csproj" />
+    <Project Path="src/Nfe.Core/Nfe.Core.csproj" />
+    <Project Path="src/Nfe.Shared/Nfe.Shared.csproj" />
+  </Folder>
+</Solution>
