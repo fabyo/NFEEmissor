@@ -6,6 +6,8 @@
 [![Publish](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml/badge.svg)](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml)
 [![License](https://img.shields.io/github/license/fabyo/NFEEmissor)](./LICENSE)
 
+# Emissor NF-e em .NET para geração, assinatura, autorização em homologação/produção, consulta SEFAZ e DANFE, com API stateless, CLI e pacotes NuGet.
+
 > Status: projeto em evolução. A emissão em homologação e produção já foram testadas, mas o uso em produção exige validação fiscal, jurídica e operacional no cenário da sua empresa.
 
 ## Leia Antes De Usar
