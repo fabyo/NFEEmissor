@@ -15,8 +15,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>NFEEmissor.Core</PackageId>
-    <Title>NFEEmissor Core</Title>
+    <PackageId>NFEEmissor</PackageId>
+    <Title>NFEEmissor</Title>
     <Description>Biblioteca principal para geração, assinatura e autorização de NF-e.</Description>
     <PackageTags>nfe;nf-e;sefaz;xml;assinatura-digital;brasil</PackageTags>
   </PropertyGroup>

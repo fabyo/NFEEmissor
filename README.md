@@ -1,6 +1,6 @@
 ![Logo](https://raw.githubusercontent.com/fabyo/NFEEmissor/master/logo-200.png)
 
-[![NuGet Core](https://img.shields.io/nuget/v/NFEEmissor.Core.svg)](https://www.nuget.org/packages/NFEEmissor.Core)
+[![NuGet](https://img.shields.io/nuget/v/NFEEmissor.svg)](https://www.nuget.org/packages/NFEEmissor)
 [![NuGet CLI](https://img.shields.io/nuget/v/NFEEmissor.Cli.svg)](https://www.nuget.org/packages/NFEEmissor.Cli)
 [![Build](https://github.com/fabyo/NFEEmissor/actions/workflows/ci.yml/badge.svg)](https://github.com/fabyo/NFEEmissor/actions/workflows/ci.yml)
 [![Publish](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml/badge.svg)](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml)
@@ -41,7 +41,7 @@ Dependências principais:
 
 O empacotamento é separado por responsabilidade:
 
-- `NFEEmissor.Core`: biblioteca principal para geração, assinatura e autorização.
+- `NFEEmissor`: biblioteca principal para geração, assinatura e autorização.
 - `NFEEmissor.Shared`: contratos/DTOs compartilhados.
 - `NFEEmissor.Cli`: ferramenta `dotnet tool` com o comando `nfe-emissor` para gerar XML assinado localmente.
 
@@ -70,7 +70,7 @@ nfe-emissor --help
 Quando os pacotes estiverem publicados no NuGet:
 
 ```bash
-dotnet add package NFEEmissor.Core --version 0.2.0
+dotnet add package NFEEmissor --version 0.2.0
 dotnet add package NFEEmissor.Shared --version 0.2.0
 dotnet tool install --global NFEEmissor.Cli --version 0.2.0
 ```
