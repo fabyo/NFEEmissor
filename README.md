@@ -1,7 +1,7 @@
 ![Logo](https://raw.githubusercontent.com/fabyo/NFEEmissor/master/logo-200.png)
 
 [![NuGet](https://img.shields.io/nuget/v/NFEEmissor.svg)](https://www.nuget.org/packages/NFEEmissor)
-[![NuGet CLI](https://img.shields.io/nuget/v/NFEEmissor.Cli.svg)](https://www.nuget.org/packages/NFEEmissor.Cli)
+[![Downloads](https://img.shields.io/nuget/dt/NFEEmissor.svg)](https://www.nuget.org/packages/NFEEmissor)
 [![Build](https://github.com/fabyo/NFEEmissor/actions/workflows/ci.yml/badge.svg)](https://github.com/fabyo/NFEEmissor/actions/workflows/ci.yml)
 [![Publish](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml/badge.svg)](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml)
 [![License](https://img.shields.io/github/license/fabyo/NFEEmissor)](./LICENSE)
