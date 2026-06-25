@@ -53,8 +53,11 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(conn);
 });
 
-// Registra o Worker em Background da fila do Redis
-builder.Services.AddHostedService<NfeQueueWorker>();
+// Registra o Worker em Background da fila do Redis, exceto em cenários de teste/integracao controlada
+if (!builder.Configuration.GetValue<bool>("Nfe:DisableBackgroundWorker"))
+{
+    builder.Services.AddHostedService<NfeQueueWorker>();
+}
 
 // Registra Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -71,8 +74,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // Startup task: Schemas XSD da SEFAZ
+var skipSchemaSync = builder.Configuration.GetValue<bool>("Nfe:SkipSchemaSync");
 var schemasDir = Path.Combine(AppContext.BaseDirectory, "schemas", "v4");
-if (!Directory.Exists(schemasDir) || !Directory.EnumerateFiles(schemasDir, "*.xsd").Any())
+if (!skipSchemaSync && (!Directory.Exists(schemasDir) || !Directory.EnumerateFiles(schemasDir, "*.xsd").Any()))
 {
     try
     {
@@ -86,7 +90,7 @@ if (!Directory.Exists(schemasDir) || !Directory.EnumerateFiles(schemasDir, "*.xs
         Log.Warning(ex, "Não foi possível rodar o NFeSchemaDownloader para baixar os schemas iniciais.");
     }
 }
-else
+else if (!skipSchemaSync)
 {
     Log.Information("Schemas XSD detectados localmente em: {SchemasDir}. Ignorando download automático no startup.", schemasDir);
 }
@@ -101,7 +105,6 @@ api.MapPost("/nfe/emitir", async (
     [FromHeader(Name = "X-Cert-Pem-Base64")] string? certPemHeader,
     [FromHeader(Name = "X-Key-Pem-Base64")] string? keyPemHeader,
     [FromQuery] bool gerarDanfe,
-    IConnectionMultiplexer redis,
     ILogger<Program> logger) =>
 {
     var cert = certHeader;
@@ -142,6 +145,7 @@ api.MapPost("/nfe/emitir", async (
     }
 
     request = validation.Value!;
+    var redis = context.RequestServices.GetRequiredService<IConnectionMultiplexer>();
     var db = redis.GetDatabase();
     var backoffKey = ObterSefazBackoffKey(request.Emitente.Endereco.Uf, request.AmbienteEmissao);
     var backoff = await db.StringGetAsync(backoffKey);

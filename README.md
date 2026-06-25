@@ -119,6 +119,16 @@ A API foi desenhada para não ser o repositório definitivo dos documentos fisca
 
 Por padrão, o resultado temporário expira em 12 horas. Depois disso, a API pode retornar `404` para o `correlationId`.
 
+## API HTTP
+
+Os exemplos abaixo usam `http://localhost:5000` e cobrem os principais endpoints:
+
+- `POST /api/v1/nfe/emitir`
+- `GET /api/v1/nfe/status/{correlationId}`
+- `GET /api/v1/nfe/consulta`
+- `GET /api/v1/nfe/status-servico`
+- `POST /api/v1/certificado/info`
+
 ## Emitindo uma NF-e
 
 Use o arquivo `nota-teste.json` como base. Em homologação, mantenha:
