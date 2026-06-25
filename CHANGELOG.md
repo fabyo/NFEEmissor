@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 - 2026-06-25
+
+- Atualizada a versão dos pacotes para `0.2.1`.
+
 ## 0.2.0 - 2026-06-25
 
 - Separado o empacotamento NuGet por responsabilidade: biblioteca principal (`NFEEmissor`) e ferramenta CLI (`NFEEmissor.Cli`), com os contratos compartilhados fundidos no pacote principal e a API fora do pacote NuGet.
@@ -15,6 +19,5 @@
 - Ajustada a formatação decimal de valores unitários (`vUnCom`, `vUnTrib`) para remover zeros desnecessários sem perder precisão.
 - Adicionada licença MIT.
 - Adicionado workflow `ci.yml` para restore, testes, build da API e pack em pushes/PRs.
-- Atualizada versão dos pacotes para `0.2.0`.
 - Reduzido o pacote `NFEEmissor.Cli` removendo geração de DANFE do tool e mantendo `NFEDanfe`, `NFEConsulta` e `NFeSchemaDownloader` fora do pacote Core; DANFE, consulta SEFAZ e sincronização de schemas permanecem disponíveis na API.
 - Ajustada a API para resolver Redis apenas após validação da requisição de emissão.

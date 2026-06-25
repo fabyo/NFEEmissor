@@ -56,7 +56,7 @@ Para instalar o CLI como tool a partir de um pacote local:
 ```bash
 dotnet tool install --global NFEEmissor.Cli \
   --add-source ./artifacts/packages \
-  --version 0.2.0
+  --version 0.2.1
 ```
 
 Depois de instalado:
@@ -68,8 +68,8 @@ nfe-emissor --help
 Quando os pacotes estiverem publicados no NuGet:
 
 ```bash
-dotnet add package NFEEmissor --version 0.2.0
-dotnet tool install --global NFEEmissor.Cli --version 0.2.0
+dotnet add package NFEEmissor --version 0.2.1
+dotnet tool install --global NFEEmissor.Cli --version 0.2.1
 ```
 
 Licença: MIT.
