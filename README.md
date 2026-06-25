@@ -1,6 +1,6 @@
 # NFEEmissor
 
-> Status: projeto em evolução. A emissão em homologação já foi testada, mas uso em produção exige validação fiscal, jurídica e operacional no cenário da sua empresa.
+> Status: projeto em evolução. A emissão em homologação e produção já foram testadas, mas o uso em produção exige validação fiscal, jurídica e operacional no cenário da sua empresa.
 
 ## Leia antes de usar
 
