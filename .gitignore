@@ -24,6 +24,11 @@ certs/
 *.p12
 *.pem
 *.key
+*.crt
+*.cer
+*.der
+*.jks
+*.keystore
 .env
 .env.*
 

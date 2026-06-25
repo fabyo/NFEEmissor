@@ -116,7 +116,6 @@ public sealed class NfeConsultaService : INfeConsultaService
                 X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
                 new Pkcs12LoaderLimits());
 
-            // Extração nativa do CNPJ e Nome do Subject
             var subject = cert.Subject;
             var cnpj = string.Empty;
             var nome = cert.FriendlyName;
@@ -127,7 +126,6 @@ public sealed class NfeConsultaService : INfeConsultaService
                 nome = cnMatch.Success ? cnMatch.Groups[1].Value.Trim() : subject;
             }
 
-            // O CNPJ geralmente vem no formato: NOME:CNPJ ou contido na extensão Subject Alternative Name
             var cnpjMatch = Regex.Match(subject, @"(?i)CNPJ:(\d{14})");
             if (cnpjMatch.Success)
             {
@@ -135,7 +133,6 @@ public sealed class NfeConsultaService : INfeConsultaService
             }
             else
             {
-                // Tenta extrair qualquer sequência de 14 dígitos que pareça CNPJ
                 var matchDigits = Regex.Match(nome, @"\d{14}");
                 if (matchDigits.Success)
                 {

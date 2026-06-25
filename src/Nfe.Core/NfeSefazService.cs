@@ -25,6 +25,29 @@ public sealed class SefazAutorizacaoResult
     public required string Protocolo { get; init; }
     public required string XmlProcNfe { get; init; }
     public DateTime DataAutorizacao { get; init; }
+    public string? ChaveAcesso { get; init; }
+    public string? Status { get; init; }
+    public string? Motivo { get; init; }
+    public string? XmlRetorno { get; init; }
+}
+
+public sealed class SefazErroException : Exception
+{
+    public SefazErroException(string code, string message, string? cStat = null, string? xMotivo = null, string? chaveAcesso = null, string? protocolo = null)
+        : base(message)
+    {
+        Code = code;
+        CStat = cStat;
+        XMotivo = xMotivo;
+        ChaveAcesso = chaveAcesso;
+        Protocolo = protocolo;
+    }
+
+    public string Code { get; }
+    public string? CStat { get; }
+    public string? XMotivo { get; }
+    public string? ChaveAcesso { get; }
+    public string? Protocolo { get; }
 }
 
 public sealed class NfeSefazService : INfeSefazService
@@ -71,6 +94,10 @@ public sealed class NfeSefazService : INfeSefazService
         catch (HttpRequestException ex)
         {
             return Result<SefazAutorizacaoResult>.Failure("SEFAZ_INDISPONIVEL", $"Erro de comunicação com a SEFAZ: {ex.Message}");
+        }
+        catch (SefazErroException ex)
+        {
+            return Result<SefazAutorizacaoResult>.Failure(ex.Code, ex.Message, ex);
         }
         catch (Exception ex)
         {
@@ -134,7 +161,11 @@ public sealed class NfeSefazService : INfeSefazService
             {
                 Protocolo = protocolo,
                 XmlProcNfe = xmlProcNfe,
-                DataAutorizacao = DateTime.UtcNow
+                DataAutorizacao = DateTime.UtcNow,
+                ChaveAcesso = infProt?.SelectSingleNode("nfe:chNFe", ns)?.InnerText,
+                Status = cStat,
+                Motivo = xMotivo,
+                XmlRetorno = xmlRetornoSefaz
             });
         }
 
@@ -143,7 +174,10 @@ public sealed class NfeSefazService : INfeSefazService
             return Result<SefazAutorizacaoResult>.Failure("SEFAZ_104", "[104] Lote processado sem protocolo da NF-e.");
         }
 
-        return Result<SefazAutorizacaoResult>.Failure($"SEFAZ_{cStat}", $"[{cStat}] {xMotivo}");
+        var chave = infProt?.SelectSingleNode("nfe:chNFe", ns)?.InnerText;
+        var code = $"SEFAZ_{cStat}";
+        var exception = new SefazErroException(code, $"[{cStat}] {xMotivo}", cStat, xMotivo, chave, protocolo);
+        return Result<SefazAutorizacaoResult>.Failure(exception.Code, exception.Message, exception);
     }
 
     private static string MontarLote(string xmlNfe)

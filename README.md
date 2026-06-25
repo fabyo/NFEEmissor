@@ -1,5 +1,7 @@
 # NFEEmissor
 
+> Status: projeto em evolução. A emissão em homologação já foi testada, mas uso em produção exige validação fiscal, jurídica e operacional no cenário da sua empresa.
+
 ## Leia antes de usar
 
 ### Sobre a responsabilidade pelo uso
@@ -19,7 +21,7 @@ Este projeto emite NF-e modelo 55 usando .NET, certificado digital A1 e webservi
 Ele possui:
 
 - `Nfe.Api`: API HTTP para emissão assíncrona, consulta de status e consulta da chave na SEFAZ.
-- `Nfe.Core`: geração de XML, assinatura digital, envio para SEFAZ, consulta e validações.
+- `Nfe.Core`: geração de XML, assinatura digital, envio para SEFAZ e validações.
 - `Nfe.Cli`: utilitário local para gerar e assinar XML sem enviar para a SEFAZ.
 - `Nfe.Shared`: contratos de entrada usados pela API e pelo CLI.
 
@@ -27,14 +29,15 @@ Dependências principais:
 
 - `NFEConsulta`: usada para consulta de status do serviço e consulta de NF-e pela chave de acesso.
 - `NFEDanfe`: usada para geração de DANFE em PDF a partir de XML autorizado (`procNFe.xml`).
+- `NFeSchemaDownloader`: usada pela API para sincronizar schemas XSD oficiais quando necessário.
 
 ## Pacotes NuGet
 
 O empacotamento é separado por responsabilidade:
 
-- `NFEEmissor.Core`: biblioteca principal para geração, assinatura, autorização, consulta e DANFE.
+- `NFEEmissor.Core`: biblioteca principal para geração, assinatura e autorização.
 - `NFEEmissor.Shared`: contratos/DTOs compartilhados.
-- `NFEEmissor.Cli`: ferramenta `dotnet tool` com o comando `nfe-emissor`.
+- `NFEEmissor.Cli`: ferramenta `dotnet tool` com o comando `nfe-emissor` para gerar XML assinado localmente.
 
 `Nfe.Api` não é empacotado como NuGet; ele é uma aplicação HTTP para rodar via Docker ou publicação própria.
 
@@ -49,7 +52,7 @@ Para instalar o CLI como tool a partir de um pacote local:
 ```bash
 dotnet tool install --global NFEEmissor.Cli \
   --add-source ./artifacts/packages \
-  --version 0.1.0
+  --version 0.2.0
 ```
 
 Depois de instalado:
@@ -57,6 +60,16 @@ Depois de instalado:
 ```bash
 nfe-emissor --help
 ```
+
+Quando os pacotes estiverem publicados no NuGet:
+
+```bash
+dotnet add package NFEEmissor.Core --version 0.2.0
+dotnet add package NFEEmissor.Shared --version 0.2.0
+dotnet tool install --global NFEEmissor.Cli --version 0.2.0
+```
+
+Licença: MIT.
 
 ## Requisitos
 
@@ -277,33 +290,25 @@ O XML assinado será salvo em `out/`.
 
 Use um XML autorizado/processado (`*-procNFe.xml`). XML apenas assinado, sem protocolo de autorização, não é suficiente para um DANFE fiscalmente válido.
 
-```bash
-docker run --rm \
-  -v "$PWD:/src" \
-  -w /src \
-  mcr.microsoft.com/dotnet/sdk:10.0 \
-  dotnet run --project src/Nfe.Cli/Nfe.Cli.csproj -- \
-    danfe \
-    --xml 35260612345678000195550010000000011000000010-procNFe.xml \
-    --output out/danfe.pdf
-```
-
-Também é aceito o alias `--danfe`:
+Na API, informe `gerarDanfe=true` ao emitir:
 
 ```bash
-dotnet run --project src/Nfe.Cli/Nfe.Cli.csproj -- \
-  --danfe \
-  --xml 35260612345678000195550010000000011000000010-procNFe.xml \
-  --output out/danfe.pdf
+curl -sS -X POST "http://localhost:5000/api/v1/nfe/emitir?gerarDanfe=true" \
+  -H "Content-Type: application/json" \
+  -H "X-Cert-Pem-Base64: $CERT" \
+  -H "X-Key-Pem-Base64: $KEY" \
+  --data-binary @nota-teste.json
 ```
 
-O PDF será salvo no caminho informado em `--output`.
+O status retornará `danfePdfBase64`. Decodifique esse valor e salve como PDF na aplicação cliente.
 
 A geração de PDF usa QuestPDF por meio da dependência `NFEDanfe`; o projeto configura a licença como `LicenseType.Community` antes de gerar o PDF:
 
 ```csharp
 QuestPDF.Settings.License = LicenseType.Community;
 ```
+
+O pacote `NFEEmissor.Cli` não inclui geração de DANFE para evitar um pacote de ferramenta muito grande. Use a API ou a dependência `NFEDanfe` diretamente para DANFE.
 
 ## CNPJ alfanumérico e Reforma Tributária
 

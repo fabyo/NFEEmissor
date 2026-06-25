@@ -1,10 +1,6 @@
 using System.Text.Json;
-using NFEDanfe;
 using Nfe.Core;
 using Nfe.Shared;
-using QuestPDF.Infrastructure;
-
-ConfigurarLicencaQuestPdf();
 
 if (args.Length == 0 || args[0] == "--help" || args[0] == "-h")
 {
@@ -123,52 +119,6 @@ if (args[0] == "emitir")
     }
 }
 
-if (args[0] is "danfe" or "--danfe")
-{
-    var xmlPath = ObterArgumento(args, "--xml");
-    var outputPath = ObterArgumento(args, "--output");
-
-    if (string.IsNullOrEmpty(xmlPath))
-    {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine("Erro: Parâmetro --xml é obrigatório.");
-        Console.ResetColor();
-        return 1;
-    }
-
-    if (!File.Exists(xmlPath))
-    {
-        Console.WriteLine($"Erro: XML não encontrado em: {xmlPath}");
-        return 1;
-    }
-
-    outputPath ??= Path.ChangeExtension(xmlPath, ".pdf");
-
-    try
-    {
-        var outputDir = Path.GetDirectoryName(outputPath);
-        if (!string.IsNullOrWhiteSpace(outputDir) && !Directory.Exists(outputDir))
-        {
-            Directory.CreateDirectory(outputDir);
-        }
-
-        await using var pdfStream = File.Create(outputPath);
-        DanfeGenerator.GenerateFromXml(xmlPath, pdfStream);
-
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"Sucesso! DANFE gerado em: {outputPath}");
-        Console.ResetColor();
-        return 0;
-    }
-    catch (Exception ex)
-    {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"Erro ao gerar DANFE: {ex.Message}");
-        Console.ResetColor();
-        return 1;
-    }
-}
-
 Console.WriteLine($"Comando desconhecido: '{args[0]}'. Use --help para ver os comandos disponíveis.");
 return 1;
 
@@ -190,8 +140,6 @@ static void MostrarAjuda()
     Console.WriteLine();
     Console.WriteLine("Uso:");
     Console.WriteLine("  nfe-emissor emitir --json <caminho> --cert <caminho> [--key <caminho>] [--senha <senha>] [--output-dir <caminho>]");
-    Console.WriteLine("  nfe-emissor danfe --xml <procNFe.xml> [--output <danfe.pdf>]");
-    Console.WriteLine("  nfe-emissor --danfe --xml <procNFe.xml> [--output <danfe.pdf>]");
     Console.WriteLine();
     Console.WriteLine("Opções:");
     Console.WriteLine("  --json       Caminho para o JSON da nota fiscal contendo os dados fiscais.");
@@ -199,12 +147,5 @@ static void MostrarAjuda()
     Console.WriteLine("  --key        Caminho para a chave privada (.key ou .pem) caso use certificado PEM.");
     Console.WriteLine("  --senha      Senha do certificado digital (opcional).");
     Console.WriteLine("  --output-dir Diretório onde o XML assinado será salvo (Padrão: 'out').");
-    Console.WriteLine("  --xml        Caminho do XML processado/autorizado (procNFe.xml) para gerar DANFE.");
-    Console.WriteLine("  --output     Caminho do PDF de saída.");
     Console.WriteLine();
-}
-
-static void ConfigurarLicencaQuestPdf()
-{
-    QuestPDF.Settings.License = LicenseType.Community;
 }

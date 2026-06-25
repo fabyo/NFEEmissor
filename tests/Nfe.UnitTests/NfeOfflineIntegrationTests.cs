@@ -1,6 +1,8 @@
 using System.Xml;
+using System.Reflection;
 using NFEDanfe;
 using Nfe.Core;
+using Nfe.Shared;
 
 namespace Nfe.UnitTests;
 
@@ -38,6 +40,22 @@ public sealed class NfeOfflineIntegrationTests
         var pdfBytes = pdfStream.ToArray();
         Assert.True(pdfBytes.Length > 1000);
         Assert.Equal("%PDF"u8.ToArray(), pdfBytes[..4]);
+    }
+
+    [Fact]
+    public void SefazService_DeveRetornarErroEstruturadoSemChamarSefaz()
+    {
+        var method = typeof(NfeSefazService).GetMethod("ParsearRetornoAutorizacao", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+
+        var result = (Result<SefazAutorizacaoResult>)method!.Invoke(null, [CriarRetornoSefazRejeitado(), CriarXmlNfeAssinadoMinimo()])!;
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("SEFAZ_267", result.ErrorCode);
+        var erro = Assert.IsType<SefazErroException>(result.Exception);
+        Assert.Equal("267", erro.CStat);
+        Assert.Equal("Rejeição: Chave de Acesso referenciada inexistente [nRef: 1]", erro.XMotivo);
+        Assert.Equal("35260612345678000195550010000000011000000010", erro.ChaveAcesso);
     }
 
     private static string CriarXmlNfeAssinadoMinimo() => """
@@ -146,5 +164,29 @@ public sealed class NfeOfflineIntegrationTests
             <xMotivo>Autorizado o uso da NF-e</xMotivo>
           </infProt>
         </protNFe>
+        """;
+
+    private static string CriarRetornoSefazRejeitado() => """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+          <soap:Body>
+            <nfeResultMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4">
+              <retEnviNFe versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+                <tpAmb>2</tpAmb>
+                <cStat>104</cStat>
+                <xMotivo>Lote processado</xMotivo>
+                <protNFe versao="4.00">
+                  <infProt>
+                    <tpAmb>2</tpAmb>
+                    <chNFe>35260612345678000195550010000000011000000010</chNFe>
+                    <nProt>135000000000000</nProt>
+                    <cStat>267</cStat>
+                    <xMotivo>Rejeição: Chave de Acesso referenciada inexistente [nRef: 1]</xMotivo>
+                  </infProt>
+                </protNFe>
+              </retEnviNFe>
+            </nfeResultMsg>
+          </soap:Body>
+        </soap:Envelope>
         """;
 }

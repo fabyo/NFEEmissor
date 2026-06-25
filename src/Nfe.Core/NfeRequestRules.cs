@@ -46,6 +46,25 @@ public static class NfeRequestRules
         if (normalized.Produtos.Any(p => p.IndicadorComposicaoTotal is not ("0" or "1")))
             errors.Add("IndicadorComposicaoTotal deve ser 0 (nao compoe total) ou 1 (compoe total).");
 
+        foreach (var produto in normalized.Produtos)
+        {
+            var ibsCbs = produto.Impostos.IbsCbs;
+            if (ibsCbs == null) continue;
+
+            if (ibsCbs.Cst.OnlyDigits().Length != 3)
+                errors.Add("IBSCBS.Cst deve conter 3 digitos.");
+
+            if (ibsCbs.CodigoClassificacaoTributaria.OnlyDigits().Length != 6)
+                errors.Add("IBSCBS.CodigoClassificacaoTributaria deve conter 6 digitos.");
+
+            if (ibsCbs.BaseCalculo < 0)
+                errors.Add("IBSCBS.BaseCalculo nao pode ser negativo.");
+
+            ValidarTributoReforma(ibsCbs.IbsUf, "IBSCBS.IbsUf", errors);
+            ValidarTributoReforma(ibsCbs.IbsMunicipio, "IBSCBS.IbsMunicipio", errors);
+            ValidarTributoReforma(ibsCbs.Cbs, "IBSCBS.Cbs", errors);
+        }
+
         if (errors.Count > 0)
             return Result<EmitirNfeRequest>.Failure("NFE_VALIDACAO_FALHOU", string.Join(" ", errors));
 
@@ -128,5 +147,18 @@ public static class NfeRequestRules
             soma += (digits[i] - '0') * pesos[i];
 
         return soma % 11 % 10;
+    }
+
+    private static void ValidarTributoReforma(TributoReformaRequest? tributo, string prefixo, List<string> errors)
+    {
+        if (tributo == null) return;
+
+        if (tributo.Aliquota < 0) errors.Add($"{prefixo}.Aliquota nao pode ser negativa.");
+        if (tributo.Valor < 0) errors.Add($"{prefixo}.Valor nao pode ser negativo.");
+        if (tributo.PercentualDiferimento < 0) errors.Add($"{prefixo}.PercentualDiferimento nao pode ser negativo.");
+        if (tributo.ValorDiferimento < 0) errors.Add($"{prefixo}.ValorDiferimento nao pode ser negativo.");
+        if (tributo.ValorDevolucaoTributo < 0) errors.Add($"{prefixo}.ValorDevolucaoTributo nao pode ser negativo.");
+        if (tributo.PercentualReducaoAliquota < 0) errors.Add($"{prefixo}.PercentualReducaoAliquota nao pode ser negativo.");
+        if (tributo.AliquotaEfetiva < 0) errors.Add($"{prefixo}.AliquotaEfetiva nao pode ser negativa.");
     }
 }

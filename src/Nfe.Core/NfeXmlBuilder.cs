@@ -166,7 +166,7 @@ public sealed class NfeXmlBuilder : INfeXmlBuilder
         w.WriteElementString("indPres", req.IndicadorPresencaComprador);
         w.WriteElementString("indIntermed", "0"); // 0=Sem intermediário (padrão)
         w.WriteElementString("procEmi", "0");    // 0=Emissão de aplicativo do contribuinte
-        w.WriteElementString("verProc", "1.0");
+        w.WriteElementString("verProc", NfeVersion.Current.Truncar(20));
 
         foreach (var refNFe in req.NotasReferenciadas.Where(static x => !string.IsNullOrWhiteSpace(x)))
         {

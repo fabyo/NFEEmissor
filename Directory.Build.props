@@ -1,9 +1,10 @@
 <Project>
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>NFEEmissor contributors</Authors>
     <Company>NFEEmissor</Company>
     <Product>NFEEmissor</Product>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>logo-200.png</PackageIcon>
     <RepositoryType>git</RepositoryType>

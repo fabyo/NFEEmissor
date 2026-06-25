@@ -6,6 +6,7 @@ public sealed class Result<T>
     public T? Value { get; }
     public string? ErrorCode { get; }
     public string? ErrorMessage { get; }
+    public Exception? Exception { get; }
 
     private Result(T value)
     {
@@ -13,13 +14,15 @@ public sealed class Result<T>
         Value = value;
     }
 
-    private Result(string code, string message)
+    private Result(string code, string message, Exception? exception = null)
     {
         IsSuccess = false;
         ErrorCode = code;
         ErrorMessage = message;
+        Exception = exception;
     }
 
     public static Result<T> Success(T value) => new(value);
     public static Result<T> Failure(string code, string message) => new(code, message);
+    public static Result<T> Failure(string code, string message, Exception exception) => new(code, message, exception);
 }

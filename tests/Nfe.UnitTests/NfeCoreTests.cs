@@ -178,6 +178,31 @@ public sealed class NfeCoreTests
     }
 
     [Fact]
+    public void NfeRequestRules_DeveRejeitarIbsCbsInvalido()
+    {
+        var request = CriarRequestValido();
+        var produto = request.Produtos[0] with
+        {
+            Impostos = request.Produtos[0].Impostos with
+            {
+                IbsCbs = new IbsCbsRequest
+                {
+                    Cst = "41",
+                    CodigoClassificacaoTributaria = "999",
+                    BaseCalculo = -1
+                }
+            }
+        };
+
+        var result = NfeRequestRules.NormalizeAndValidate(request with { Produtos = [produto] });
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("IBSCBS.Cst", result.ErrorMessage);
+        Assert.Contains("IBSCBS.CodigoClassificacaoTributaria", result.ErrorMessage);
+        Assert.Contains("IBSCBS.BaseCalculo", result.ErrorMessage);
+    }
+
+    [Fact]
     public async Task NfeXmlBuilder_DeveFormatarValorUnitarioSemZerosDesnecessarios()
     {
         var request = CriarRequestValido();
@@ -188,6 +213,15 @@ public sealed class NfeCoreTests
         Assert.Contains("<vUnCom>100</vUnCom>", result.Value!.XmlNfe);
         Assert.Contains("<vUnTrib>100</vUnTrib>", result.Value.XmlNfe);
         Assert.DoesNotContain("100.0000000000", result.Value.XmlNfe);
+    }
+
+    [Fact]
+    public async Task NfeXmlBuilder_DeveUsarVersaoDoPacoteNoVerProc()
+    {
+        var result = await new NfeXmlBuilder().BuildAsync(CriarRequestValido());
+
+        Assert.True(result.IsSuccess, result.ErrorMessage);
+        Assert.Contains($"<verProc>{NfeVersion.Current}</verProc>", result.Value!.XmlNfe);
     }
 
     private static EmitirNfeRequest CriarRequestValido() => new()

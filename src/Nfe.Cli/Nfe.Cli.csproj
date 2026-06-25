@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="NFEDanfe" Version="0.1.22" />
     <ProjectReference Include="..\Nfe.Core\Nfe.Core.csproj" />
     <ProjectReference Include="..\Nfe.Shared\Nfe.Shared.csproj" />
   </ItemGroup>
@@ -16,9 +15,8 @@
     <ToolCommandName>nfe-emissor</ToolCommandName>
     <PackageId>NFEEmissor.Cli</PackageId>
     <Title>NFEEmissor CLI</Title>
-    <Description>Ferramenta de linha de comando para gerar XML assinado de NF-e e DANFE a partir de procNFe.</Description>
-    <PackageTags>nfe;nf-e;cli;tool;danfe;xml;assinatura-digital;brasil</PackageTags>
-    <NoWarn>$(NoWarn);NU5111</NoWarn>
+    <Description>Ferramenta de linha de comando para gerar XML assinado de NF-e sem enviar para a SEFAZ.</Description>
+    <PackageTags>nfe;nf-e;cli;tool;xml;assinatura-digital;brasil</PackageTags>
   </PropertyGroup>
 
 </Project>

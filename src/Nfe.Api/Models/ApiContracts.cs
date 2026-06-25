@@ -19,6 +19,7 @@ public sealed record NfeStatusApiResponse
     public string? XmlResult { get; init; } // XmlProcNfe completo em caso de autorização
     public string? DanfePdfBase64 { get; init; }
     public string? ErroDetalhado { get; init; }
+    public SefazErroApiResponse? SefazErro { get; init; }
     public DateTimeOffset? ExpiraEm { get; init; }
     public int? TtlSegundos { get; init; }
     public StorageResult? Storage { get; init; }
@@ -46,4 +47,13 @@ public sealed record StorageResult
     public bool Persistido { get; init; }
     public string? XmlProcNfeUri { get; init; }
     public string? DanfePdfUri { get; init; }
+}
+
+public sealed record SefazErroApiResponse
+{
+    public string? Codigo { get; init; }
+    public string? Status { get; init; }
+    public string? Motivo { get; init; }
+    public string? ChaveAcesso { get; init; }
+    public string? Protocolo { get; init; }
 }

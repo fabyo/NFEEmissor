@@ -141,7 +141,7 @@ public sealed class NfeQueueWorker : BackgroundService
                         SefazConsumoIndevidoBackoff);
                 }
 
-                await FinalizarComErroAsync(db, statusKey, sefazResult.ErrorCode!, sefazResult.ErrorMessage!);
+                await FinalizarComErroAsync(db, statusKey, sefazResult.ErrorCode!, sefazResult.ErrorMessage!, ExtrairErroSefaz(sefazResult.Exception));
                 return;
             }
 
@@ -216,6 +216,9 @@ public sealed class NfeQueueWorker : BackgroundService
     }
 
     private async Task FinalizarComErroAsync(IDatabase db, string key, string code, string message)
+        => await FinalizarComErroAsync(db, key, code, message, null);
+
+    private async Task FinalizarComErroAsync(IDatabase db, string key, string code, string message, SefazErroApiResponse? sefazErro)
     {
         _logger.LogError("Falha no processamento. Codigo: {Code} | Mensagem: {Msg}", code, message);
 
@@ -224,6 +227,7 @@ public sealed class NfeQueueWorker : BackgroundService
             CorrelationId = key.Replace(StatusKeyPrefix, ""),
             Status = "Rejeitada",
             ErroDetalhado = $"[{code}] {message}",
+            SefazErro = sefazErro,
             ExpiraEm = DateTimeOffset.UtcNow.Add(StatusTtl),
             TtlSegundos = (int)StatusTtl.TotalSeconds
         };
@@ -232,4 +236,19 @@ public sealed class NfeQueueWorker : BackgroundService
 
     private static string ObterSefazBackoffKey(string uf, string ambiente)
         => $"nfe-sefaz-backoff:{uf.ToUpperInvariant()}:{ambiente}";
+
+    private static SefazErroApiResponse? ExtrairErroSefaz(Exception? exception)
+    {
+        if (exception is not SefazErroException sefazErro)
+            return null;
+
+        return new SefazErroApiResponse
+        {
+            Codigo = sefazErro.Code,
+            Status = sefazErro.CStat,
+            Motivo = sefazErro.XMotivo,
+            ChaveAcesso = sefazErro.ChaveAcesso,
+            Protocolo = sefazErro.Protocolo
+        };
+    }
 }
