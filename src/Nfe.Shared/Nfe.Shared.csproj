@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
     <PackageId>NFEEmissor.Shared</PackageId>
     <Title>NFEEmissor Shared</Title>
     <Description>Contratos e DTOs compartilhados para emissão de NF-e com NFEEmissor.</Description>

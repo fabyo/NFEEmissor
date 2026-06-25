@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nfe.Core\Nfe.Core.csproj" />
-    <ProjectReference Include="..\Nfe.Shared\Nfe.Shared.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Nfe.Core\Nfe.Core.csproj" />
-    <ProjectReference Include="..\..\src\Nfe.Shared\Nfe.Shared.csproj" />
   </ItemGroup>
 
 </Project>

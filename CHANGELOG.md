@@ -2,7 +2,7 @@
 
 ## 0.2.0 - 2026-06-25
 
-- Separado o empacotamento NuGet por responsabilidade: biblioteca principal (`NFEEmissor`), `NFEEmissor.Shared`, ferramenta CLI (`NFEEmissor.Cli`) e API fora do pacote NuGet.
+- Separado o empacotamento NuGet por responsabilidade: biblioteca principal (`NFEEmissor`) e ferramenta CLI (`NFEEmissor.Cli`), com os contratos compartilhados fundidos no pacote principal e a API fora do pacote NuGet.
 - Adicionados metadados de pacote NuGet, incluindo título, descrição, tags, README e ícone `logo-200.png`.
 - Adicionada solução `NfeEmissor.Packages.slnx` para empacotar apenas os projetos publicáveis.
 - Formalizado o comportamento stateless da API: Redis usado apenas para fila/status temporário com TTL, documentos fiscais retornados no status e persistência definitiva delegada à aplicação cliente.

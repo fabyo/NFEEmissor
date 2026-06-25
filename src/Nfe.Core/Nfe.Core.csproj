@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Nfe.Shared\Nfe.Shared.csproj" />
+    <Compile Include="..\Nfe.Shared\Result.cs" Link="Shared\Result.cs" />
+    <Compile Include="..\Nfe.Shared\NfeRequest.cs" Link="Shared\NfeRequest.cs" />
   </ItemGroup>
 
   <ItemGroup>

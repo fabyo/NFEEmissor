@@ -29,7 +29,6 @@ Ele possui:
 - `Nfe.Api`: API HTTP para emissão assíncrona, consulta de status e consulta da chave na SEFAZ.
 - `Nfe.Core`: geração de XML, assinatura digital, envio para SEFAZ e validações.
 - `Nfe.Cli`: utilitário local para gerar e assinar XML sem enviar para a SEFAZ.
-- `Nfe.Shared`: contratos de entrada usados pela API e pelo CLI.
 
 Dependências principais:
 
@@ -42,7 +41,6 @@ Dependências principais:
 O empacotamento é separado por responsabilidade:
 
 - `NFEEmissor`: biblioteca principal para geração, assinatura e autorização.
-- `NFEEmissor.Shared`: contratos/DTOs compartilhados.
 - `NFEEmissor.Cli`: ferramenta `dotnet tool` com o comando `nfe-emissor` para gerar XML assinado localmente.
 
 `Nfe.Api` não é empacotado como NuGet; ele é uma aplicação HTTP para rodar via Docker ou publicação própria.
@@ -71,7 +69,6 @@ Quando os pacotes estiverem publicados no NuGet:
 
 ```bash
 dotnet add package NFEEmissor --version 0.2.0
-dotnet add package NFEEmissor.Shared --version 0.2.0
 dotnet tool install --global NFEEmissor.Cli --version 0.2.0
 ```
 
