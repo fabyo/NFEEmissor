@@ -8,17 +8,17 @@
 
 > Status: projeto em evolução. A emissão em homologação e produção já foram testadas, mas o uso em produção exige validação fiscal, jurídica e operacional no cenário da sua empresa.
 
-## Leia antes de usar
+## Leia Antes De Usar
 
-### Sobre a responsabilidade pelo uso
-
-Este projeto nasceu de uma necessidade real e foi construído com cuidado — mas NF-e é um ecossistema complexo. Regras tributárias mudam, cada UF tem suas peculiaridades, cada regime fiscal tem suas exigências, e cada empresa tem um cenário diferente dos demais.
-
-Antes de usar em produção: teste muito. Valide no ambiente de homologação da SEFAZ. Revise os XMLs gerados com alguém que entenda do processo fiscal da sua empresa.
-
-A legislação, as regras de CSOSN/CST, os parâmetros de ICMS, PIS e COFINS variam por UF, regime tributário e atividade econômica — e essa variação é sua responsabilidade conhecer e configurar corretamente.
-
-Ao usar este projeto, você assume total responsabilidade pelos documentos emitidos. O autor disponibiliza o código de boa-fé, mas não presta suporte fiscal nem se responsabiliza por erros, rejeições ou penalidades.
+> **Sobre a responsabilidade pelo uso**
+>
+> Este projeto nasceu de uma necessidade real e foi construído com cuidado, mas NF-e é um ecossistema complexo. Regras tributárias mudam, cada UF tem suas peculiaridades, cada regime fiscal tem suas exigências, e cada empresa tem um cenário diferente dos demais.
+>
+> Antes de usar em produção: teste muito. Valide no ambiente de homologação da SEFAZ. Revise os XMLs gerados com alguém que entenda do processo fiscal da sua empresa.
+>
+> A legislação, as regras de CSOSN/CST, os parâmetros de ICMS, PIS e COFINS variam por UF, regime tributário e atividade econômica, e essa variação é sua responsabilidade conhecer e configurar corretamente.
+>
+> Ao usar este projeto, você assume total responsabilidade pelos documentos emitidos. O autor disponibiliza o código de boa-fé, mas não presta suporte fiscal nem se responsabiliza por erros, rejeições ou penalidades.
 
 ## O que este projeto faz
 
