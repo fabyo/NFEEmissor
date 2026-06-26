@@ -31,15 +31,34 @@ public sealed class QueueMessage
     public required string UfEmitente { get; init; }
     public required string Ambiente { get; init; }
     public required EmitirNfeRequest Request { get; init; }
-    public required string CertificadoBase64 { get; init; }
-    public required string CertificadoSenha { get; init; }
+    public required string CertificadoBase64 { get; init; } = string.Empty;
+    public required string CertificadoSenha { get; init; } = string.Empty;
 
     // Alternativa PEM: se preenchidos, sobrepoe o PFX acima
     /// <summary>Conteudo do cert.pem codificado em Base64 (opcional, alternativa ao PFX)</summary>
     public string? CertPemBase64 { get; init; }
     /// <summary>Conteudo do key.pem codificado em Base64 (opcional, alternativa ao PFX)</summary>
     public string? KeyPemBase64 { get; init; }
+    public ProtectedQueueCredentials? ProtectedCredentials { get; init; }
     public bool GerarDanfe { get; init; }
+}
+
+public sealed record QueueCredentials
+{
+    public string CertificadoBase64 { get; init; } = string.Empty;
+    public string CertificadoSenha { get; init; } = string.Empty;
+    public string? CertPemBase64 { get; init; }
+    public string? KeyPemBase64 { get; init; }
+}
+
+public sealed record ProtectedQueueCredentials
+{
+    public required string Version { get; init; }
+    public required string Algorithm { get; init; }
+    public required string KeyId { get; init; }
+    public required string NonceBase64 { get; init; }
+    public required string CiphertextBase64 { get; init; }
+    public required string TagBase64 { get; init; }
 }
 
 public sealed record StorageResult

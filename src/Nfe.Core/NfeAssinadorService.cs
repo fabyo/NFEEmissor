@@ -12,6 +12,8 @@ public interface INfeAssinadorService
     Result<AssinaturaResult> AssinarComPem(string xmlNfe, string certPemPath, string keyPemPath);
     /// <summary>Assina usando o conteudo PEM como string (nao caminho). Ideal para header Base64.</summary>
     Result<AssinaturaResult> AssinarComPemConteudo(string xmlNfe, string certPemConteudo, string keyPemConteudo);
+    Result<AssinaturaResult> AssinarElemento(string xml, string elementoAssinavel, string idPrefixo, string certBase64, string senha);
+    Result<AssinaturaResult> AssinarElementoComPemConteudo(string xml, string elementoAssinavel, string idPrefixo, string certPemConteudo, string keyPemConteudo);
 }
 
 public sealed class AssinaturaResult
@@ -65,6 +67,48 @@ public sealed class NfeAssinadorService : INfeAssinadorService
             using var cert = CarregarCertificadoPem(certPemConteudo, keyPemConteudo);
 
             return AssinarComCertificado(xmlNfe, cert);
+        }
+        catch (Exception ex)
+        {
+            return Result<AssinaturaResult>.Failure("ASSINATURA_PEM_FALHOU", ex.Message);
+        }
+    }
+
+    public Result<AssinaturaResult> AssinarElemento(
+        string xml,
+        string elementoAssinavel,
+        string idPrefixo,
+        string certBase64,
+        string senha)
+    {
+        try
+        {
+            var certBytes = Convert.FromBase64String(certBase64);
+            using var cert = X509CertificateLoader.LoadPkcs12(
+                certBytes,
+                senha,
+                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
+                new Pkcs12LoaderLimits());
+
+            return AssinarElementoComCertificado(xml, elementoAssinavel, idPrefixo, cert);
+        }
+        catch (Exception ex)
+        {
+            return Result<AssinaturaResult>.Failure("ASSINATURA_FALHOU", ex.Message);
+        }
+    }
+
+    public Result<AssinaturaResult> AssinarElementoComPemConteudo(
+        string xml,
+        string elementoAssinavel,
+        string idPrefixo,
+        string certPemConteudo,
+        string keyPemConteudo)
+    {
+        try
+        {
+            using var cert = CarregarCertificadoPem(certPemConteudo, keyPemConteudo);
+            return AssinarElementoComCertificado(xml, elementoAssinavel, idPrefixo, cert);
         }
         catch (Exception ex)
         {
@@ -136,6 +180,53 @@ public sealed class NfeAssinadorService : INfeAssinadorService
         });
     }
 
+    private static Result<AssinaturaResult> AssinarElementoComCertificado(
+        string xml,
+        string elementoAssinavel,
+        string idPrefixo,
+        X509Certificate2 cert)
+    {
+        var doc = new XmlDocument { PreserveWhitespace = true };
+        doc.LoadXml(xml);
+
+        var element = doc.GetElementsByTagName(elementoAssinavel)[0] as XmlElement
+            ?? throw new InvalidOperationException($"Elemento {elementoAssinavel} não encontrado");
+        var id = element.GetAttribute("Id");
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            throw new InvalidOperationException($"Elemento {elementoAssinavel} sem atributo Id");
+        }
+
+        var rsa = cert.GetRSAPrivateKey()
+            ?? throw new InvalidOperationException("Certificado sem chave privada RSA");
+
+        var signedXml = new NfeSignedXml(doc) { SigningKey = rsa };
+        var signedInfo = signedXml.SignedInfo ?? throw new InvalidOperationException("SignedInfo nao foi inicializado.");
+        signedInfo.SignatureMethod = "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
+        signedInfo.CanonicalizationMethod = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
+
+        var reference = new Reference($"#{id}");
+        reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
+        reference.AddTransform(new XmlDsigC14NTransform());
+        reference.DigestMethod = "http://www.w3.org/2000/09/xmldsig#sha1";
+        signedXml.AddReference(reference);
+
+        var keyInfo = new KeyInfo();
+        keyInfo.AddClause(new KeyInfoX509Data(cert));
+        signedXml.KeyInfo = keyInfo;
+
+        signedXml.ComputeSignature();
+
+        var xmlSignature = signedXml.GetXml();
+        element.ParentNode!.AppendChild(doc.ImportNode(xmlSignature, true));
+
+        return Result<AssinaturaResult>.Success(new AssinaturaResult
+        {
+            ChaveAcesso = id.StartsWith(idPrefixo, StringComparison.Ordinal) ? id[idPrefixo.Length..] : id,
+            XmlAssinado = doc.OuterXml
+        });
+    }
+
     private static string ExtrairChaveAcesso(XmlDocument doc)
     {
         var infNfe = doc.GetElementsByTagName("infNFe")[0]
@@ -159,8 +250,8 @@ internal sealed class NfeSignedXml : SignedXml
         var elem = base.GetIdElement(doc, id);
         if (elem != null) return elem;
 
-        // Fallback: Busca manual baseada na tag infNFe e o ID correspondente
-        var list = doc.GetElementsByTagName("infNFe");
+        // Fallback: busca manual por qualquer elemento com atributo Id correspondente.
+        var list = doc.GetElementsByTagName("*");
         foreach (XmlNode node in list)
         {
             if (node is XmlElement el && el.GetAttribute("Id") == id)

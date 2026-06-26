@@ -4,6 +4,11 @@ services:
     container_name: nfe-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   seq:
     image: datalust/seq:latest
@@ -24,6 +29,14 @@ services:
     environment:
       - ConnectionStrings__Redis=redis:6379
       - Seq__Url=http://seq:5341
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
     depends_on:
-      - redis
-      - seq
+      redis:
+        condition: service_healthy
+      seq:
+        condition: service_started

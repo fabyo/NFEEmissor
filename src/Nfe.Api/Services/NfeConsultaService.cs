@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.RegularExpressions;
 using NFEConsulta.Models;
 using NFEConsulta.Services;
@@ -9,8 +10,8 @@ namespace Nfe.Core;
 
 public interface INfeConsultaService
 {
-    Task<Result<ConsultaNfeResult>> ConsultarChaveAsync(string chave, string certBase64, string senha, string ufEmitente, string ambiente);
-    Task<Result<StatusServicoResult>> ConsultarStatusServicoAsync(string ufEmitente, string ambiente, string certBase64, string senha);
+    Task<Result<ConsultaNfeResult>> ConsultarChaveAsync(string chave, string certBase64, string senha, string ufEmitente, string ambiente, string? certPemBase64 = null, string? keyPemBase64 = null);
+    Task<Result<StatusServicoResult>> ConsultarStatusServicoAsync(string ufEmitente, string ambiente, string certBase64, string senha, string? certPemBase64 = null, string? keyPemBase64 = null);
     Result<CertificadoInfoResult> ExtrairInformacoesCertificado(string certBase64, string senha);
 }
 
@@ -38,16 +39,11 @@ public sealed class CertificadoInfoResult
 
 public sealed class NfeConsultaService : INfeConsultaService
 {
-    public async Task<Result<ConsultaNfeResult>> ConsultarChaveAsync(string chave, string certBase64, string senha, string ufEmitente, string ambiente)
+    public async Task<Result<ConsultaNfeResult>> ConsultarChaveAsync(string chave, string certBase64, string senha, string ufEmitente, string ambiente, string? certPemBase64 = null, string? keyPemBase64 = null)
     {
         try
         {
-            var certBytes = Convert.FromBase64String(certBase64);
-            using var cert = X509CertificateLoader.LoadPkcs12(
-                certBytes,
-                senha,
-                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
-                new Pkcs12LoaderLimits());
+            using var cert = CarregarCertificadoCliente(certBase64, senha, certPemBase64, keyPemBase64);
 
             var options = new NFeConsultaOptions
             {
@@ -72,16 +68,11 @@ public sealed class NfeConsultaService : INfeConsultaService
         }
     }
 
-    public async Task<Result<StatusServicoResult>> ConsultarStatusServicoAsync(string ufEmitente, string ambiente, string certBase64, string senha)
+    public async Task<Result<StatusServicoResult>> ConsultarStatusServicoAsync(string ufEmitente, string ambiente, string certBase64, string senha, string? certPemBase64 = null, string? keyPemBase64 = null)
     {
         try
         {
-            var certBytes = Convert.FromBase64String(certBase64);
-            using var cert = X509CertificateLoader.LoadPkcs12(
-                certBytes,
-                senha,
-                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
-                new Pkcs12LoaderLimits());
+            using var cert = CarregarCertificadoCliente(certBase64, senha, certPemBase64, keyPemBase64);
 
             var options = new NFeConsultaOptions
             {
@@ -151,5 +142,25 @@ public sealed class NfeConsultaService : INfeConsultaService
         {
             return Result<CertificadoInfoResult>.Failure("EXTRAIR_CERTIFICADO_FALHOU", ex.Message);
         }
+    }
+
+    private static X509Certificate2 CarregarCertificadoCliente(string certBase64, string senha, string? certPemBase64, string? keyPemBase64)
+    {
+        if (!string.IsNullOrWhiteSpace(certPemBase64) && !string.IsNullOrWhiteSpace(keyPemBase64))
+        {
+            var certPem = Encoding.UTF8.GetString(Convert.FromBase64String(certPemBase64));
+            var keyPem = Encoding.UTF8.GetString(Convert.FromBase64String(keyPemBase64));
+            using var publicCert = X509CertificateLoader.LoadCertificate(Encoding.UTF8.GetBytes(certPem));
+            using var rsa = RSA.Create();
+            rsa.ImportFromPem(keyPem);
+            return publicCert.CopyWithPrivateKey(rsa);
+        }
+
+        var certBytes = Convert.FromBase64String(certBase64);
+        return X509CertificateLoader.LoadPkcs12(
+            certBytes,
+            senha,
+            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
+            new Pkcs12LoaderLimits());
     }
 }

@@ -48,6 +48,12 @@ public static class NfeRequestRules
 
         foreach (var produto in normalized.Produtos)
         {
+            if (!GtinValidator.IsValid(produto.CodigoEan))
+                errors.Add($"Produto {produto.CodigoProduto}: CodigoEan deve ser GTIN-8, GTIN-12, GTIN-13, GTIN-14 valido ou SEM GTIN.");
+
+            if (!GtinValidator.IsValid(produto.CodigoEanTributavel))
+                errors.Add($"Produto {produto.CodigoProduto}: CodigoEanTributavel deve ser GTIN-8, GTIN-12, GTIN-13, GTIN-14 valido ou SEM GTIN.");
+
             var ibsCbs = produto.Impostos.IbsCbs;
             if (ibsCbs == null) continue;
 
@@ -160,5 +166,8 @@ public static class NfeRequestRules
         if (tributo.ValorDevolucaoTributo < 0) errors.Add($"{prefixo}.ValorDevolucaoTributo nao pode ser negativo.");
         if (tributo.PercentualReducaoAliquota < 0) errors.Add($"{prefixo}.PercentualReducaoAliquota nao pode ser negativo.");
         if (tributo.AliquotaEfetiva < 0) errors.Add($"{prefixo}.AliquotaEfetiva nao pode ser negativa.");
+
+        if (tributo.PercentualDiferimento > 100) errors.Add($"{prefixo}.PercentualDiferimento nao pode ser maior que 100.");
+        if (tributo.PercentualReducaoAliquota > 100) errors.Add($"{prefixo}.PercentualReducaoAliquota nao pode ser maior que 100.");
     }
 }

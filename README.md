@@ -6,7 +6,7 @@
 [![Publish](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml/badge.svg)](https://github.com/fabyo/NFEEmissor/actions/workflows/publish.yml)
 [![License](https://img.shields.io/github/license/fabyo/NFEEmissor)](./LICENSE)
 
-# Emissor NF-e em .NET para geração, assinatura, autorização em homologação/produção, consulta SEFAZ e DANFE, com API stateless, CLI e pacotes NuGet.
+# Emissor NF-e em .NET para geração, assinatura, autorização em homologação/produção, eventos fiscais, consulta SEFAZ e DANFE, com API stateless, CLI e pacotes NuGet.
 
 > Status: projeto em evolução. A emissão em homologação e produção já foram testadas, mas o uso em produção exige validação fiscal, jurídica e operacional no cenário da sua empresa.
 
@@ -28,9 +28,9 @@ Este projeto emite NF-e modelo 55 usando .NET, certificado digital A1 e webservi
 
 Ele possui:
 
-- `Nfe.Api`: API HTTP para emissão assíncrona, consulta de status e consulta da chave na SEFAZ.
-- `Nfe.Core`: geração de XML, assinatura digital, envio para SEFAZ e validações.
-- `Nfe.Cli`: utilitário local para gerar e assinar XML sem enviar para a SEFAZ.
+- `Nfe.Api`: API HTTP para emissão assíncrona, eventos fiscais, consulta de status e consulta da chave na SEFAZ.
+- `Nfe.Core`: geração de XML, assinatura digital, envio para SEFAZ, eventos e validações.
+- `Nfe.Cli`: utilitário local para gerar e assinar XML de NF-e, eventos e inutilização sem enviar para a SEFAZ.
 
 Dependências principais:
 
@@ -58,7 +58,7 @@ Para instalar o CLI como tool a partir de um pacote local:
 ```bash
 dotnet tool install --global NFEEmissor.Cli \
   --add-source ./artifacts/packages \
-  --version 0.2.1
+  --version 0.3.2
 ```
 
 Depois de instalado:
@@ -70,8 +70,8 @@ nfe-emissor --help
 Quando os pacotes estiverem publicados no NuGet:
 
 ```bash
-dotnet add package NFEEmissor --version 0.2.1
-dotnet tool install --global NFEEmissor.Cli --version 0.2.1
+dotnet add package NFEEmissor --version 0.3.2
+dotnet tool install --global NFEEmissor.Cli --version 0.3.2
 ```
 
 Licença: MIT.
@@ -109,17 +109,32 @@ Serviços auxiliares:
 - Redis: `localhost:6379`
 - Seq: `http://localhost:8085`
 
+Healthcheck:
+
+```bash
+curl -sS "http://localhost:5000/health"
+```
+
 ## Modelo stateless
 
 A API foi desenhada para não ser o repositório definitivo dos documentos fiscais.
 
 - Não há banco de dados obrigatório.
 - Redis é usado apenas para fila, idempotência curta, backoff temporário da SEFAZ e status com TTL.
+- Certificados e senhas colocados na fila Redis são protegidos com AES-256-GCM antes de serem serializados.
 - O status retorna o `xmlResult` (`procNFe.xml`) e, quando solicitado, `danfePdfBase64`.
 - A aplicação cliente deve persistir o XML autorizado e o DANFE em seu próprio storage, banco, disco, S3/MinIO ou sistema fiscal.
 - Para integrar persistência sem mudar o fluxo da API, implemente `INfeStorage`. A implementação padrão é `NoopNfeStorage`, que não grava nada.
 
 Por padrão, o resultado temporário expira em 12 horas. Depois disso, a API pode retornar `404` para o `correlationId`.
+
+Para produção ou múltiplas réplicas da API, configure uma chave compartilhada para proteger as credenciais temporárias da fila:
+
+```bash
+export Nfe__QueueProtectionKey="use-um-segredo-com-pelo-menos-32-caracteres"
+```
+
+Sem essa configuração, a aplicação usa uma chave aleatória local gerada ao iniciar o processo. Isso é suficiente para desenvolvimento em uma única instância, mas mensagens antigas da fila não poderão ser processadas após restart.
 
 ## API HTTP
 
@@ -129,7 +144,12 @@ Os exemplos abaixo usam `http://localhost:5000` e cobrem os principais endpoints
 - `GET /api/v1/nfe/status/{correlationId}`
 - `GET /api/v1/nfe/consulta`
 - `GET /api/v1/nfe/status-servico`
+- `POST /api/v1/nfe/cancelar`
+- `POST /api/v1/nfe/cce`
+- `POST /api/v1/nfe/inutilizar`
 - `POST /api/v1/certificado/info`
+- `GET /health`
+- `GET /api/v1/nfe/schemas`
 
 ## Emitindo uma NF-e
 
@@ -255,6 +275,113 @@ curl -sS "http://localhost:5000/api/v1/nfe/status-servico?uf=SP&ambiente=2" \
   -H "X-Certificado-Senha: sua-senha"
 ```
 
+Se preferir PEM, o endpoint também aceita `X-Cert-Pem-Base64` e `X-Key-Pem-Base64` no lugar do PFX.
+
+## Cancelamento, CC-e e inutilização
+
+Os eventos fiscais usam os mesmos headers de certificado da emissão e consulta. A API aceita PFX:
+
+```bash
+CERT=$(base64 -w0 certs/cert.pfx)
+```
+
+Ou PEM:
+
+```bash
+CERT=$(base64 -w0 certs/cert.pem)
+KEY=$(base64 -w0 certs/key.pem)
+```
+
+### Cancelar NF-e
+
+Use o cancelamento quando a NF-e já foi autorizada e ainda está dentro das regras/prazo da SEFAZ.
+
+```bash
+curl -sS -X POST "http://localhost:5000/api/v1/nfe/cancelar" \
+  -H "Content-Type: application/json" \
+  -H "X-Certificado-Base64: $CERT" \
+  -H "X-Certificado-Senha: sua-senha" \
+  -d '{
+    "ambiente": "2",
+    "uf": "SP",
+    "chaveAcesso": "35260612345678000195550010000000011000000010",
+    "cnpjEmitente": "12345678000195",
+    "protocoloAutorizacao": "135000000000000",
+    "justificativa": "Erro operacional identificado apos autorizacao"
+  }'
+```
+
+Resposta autorizada:
+
+```json
+{
+  "status": "135",
+  "motivo": "Evento registrado e vinculado a NF-e",
+  "chaveAcesso": "35260612345678000195550010000000011000000010",
+  "tipoEvento": "110111",
+  "sequenciaEvento": 1,
+  "protocolo": "135000000000001",
+  "xmlProcEventoNfe": "<procEventoNFe ..."
+}
+```
+
+### Carta de Correção Eletrônica
+
+Use CC-e apenas para correções permitidas pela legislação. Ela não pode corrigir valores de imposto, remetente/destinatário, data de emissão ou saída.
+
+```bash
+curl -sS -X POST "http://localhost:5000/api/v1/nfe/cce" \
+  -H "Content-Type: application/json" \
+  -H "X-Cert-Pem-Base64: $CERT" \
+  -H "X-Key-Pem-Base64: $KEY" \
+  -d '{
+    "ambiente": "2",
+    "uf": "SP",
+    "chaveAcesso": "35260612345678000195550010000000011000000010",
+    "cnpjEmitente": "12345678000195",
+    "sequenciaEvento": 1,
+    "correcao": "Correção do texto das informações adicionais da nota fiscal"
+  }'
+```
+
+### Inutilizar numeração
+
+Use inutilização para comunicar uma quebra de sequência de numeração que não será usada.
+
+```bash
+curl -sS -X POST "http://localhost:5000/api/v1/nfe/inutilizar" \
+  -H "Content-Type: application/json" \
+  -H "X-Certificado-Base64: $CERT" \
+  -H "X-Certificado-Senha: sua-senha" \
+  -d '{
+    "ambiente": "2",
+    "uf": "SP",
+    "cnpjEmitente": "12345678000195",
+    "ano": "2026",
+    "modelo": "55",
+    "serie": "1",
+    "numeroInicial": 10,
+    "numeroFinal": 12,
+    "justificativa": "Quebra de sequência por erro operacional interno"
+  }'
+```
+
+Resposta autorizada:
+
+```json
+{
+  "status": "102",
+  "motivo": "Inutilizacao de numero homologado",
+  "uf": "35",
+  "ano": "26",
+  "cnpjEmitente": "12345678000195",
+  "serie": "1",
+  "numeroInicial": 10,
+  "numeroFinal": 12,
+  "protocolo": "135000000000002"
+}
+```
+
 ## Lendo informações do certificado
 
 ```bash
@@ -301,6 +428,31 @@ docker run --rm \
 
 O XML assinado será salvo em `out/`.
 
+O CLI também gera XML assinado de eventos e inutilização sem enviar para a SEFAZ:
+
+```bash
+dotnet run --project src/Nfe.Cli/Nfe.Cli.csproj -- \
+  cancelar \
+  --json cancelamento.json \
+  --cert certs/cert.pfx \
+  --senha sua-senha \
+  --output-dir out
+
+dotnet run --project src/Nfe.Cli/Nfe.Cli.csproj -- \
+  cce \
+  --json cce.json \
+  --cert certs/cert.pem \
+  --key certs/key.pem \
+  --output-dir out
+
+dotnet run --project src/Nfe.Cli/Nfe.Cli.csproj -- \
+  inutilizar \
+  --json inutilizacao.json \
+  --cert certs/cert.pfx \
+  --senha sua-senha \
+  --output-dir out
+```
+
 ## Gerando DANFE em PDF
 
 Use um XML autorizado/processado (`*-procNFe.xml`). XML apenas assinado, sem protocolo de autorização, não é suficiente para um DANFE fiscalmente válido.
@@ -337,6 +489,36 @@ O projeto aceita CNPJ com letras, preservando os 14 caracteres alfanuméricos no
 
 Também há suporte inicial ao grupo `IBSCBS` nos impostos do item. O projeto escreve os campos informados e agrega os totais em `IBSCBSTot`, mas não calcula automaticamente enquadramento, CST, `cClassTrib` ou alíquotas. Esses valores devem vir do sistema fiscal/tributário do emissor.
 
+O validador XSD pode ser apontado para pacotes de schema mais recentes, como PL_010C/CNPJ Alfa, por configuração:
+
+```bash
+export Nfe__SchemasPath="/caminho/para/schemas/v4"
+export Nfe__TiposBasicosSchema="tiposBasico_PL_010C_v1.30.xsd"
+export Nfe__NfeSchema="nfe_PL_010C_v1.30.xsd"
+export Nfe__ValidateXsdBeforeSend="true"
+```
+
+Se os nomes não forem informados, o projeto tenta descobrir automaticamente `tiposBasico*.xsd` e `nfe_v*.xsd` no diretório configurado.
+
+Na API, `Nfe__ValidateXsdBeforeSend` vem habilitado por padrão. Se os schemas não estiverem disponíveis ou o XML não validar, a NF-e não é assinada nem enviada para a SEFAZ. Para diagnosticar quais schemas foram carregados:
+
+```bash
+curl -sS "http://localhost:5000/api/v1/nfe/schemas"
+```
+
+No CLI, a validação XSD é explícita:
+
+```bash
+nfe-emissor emitir \
+  --json nota-teste.json \
+  --cert certs/cert.pfx \
+  --senha sua-senha \
+  --validar-xsd \
+  --schemas-path schemas/v4 \
+  --tipos-basicos-schema tiposBasico_PL_010C_v1.30.xsd \
+  --nfe-schema nfe_PL_010C_v1.30.xsd
+```
+
 Exemplo:
 
 ```json
@@ -360,6 +542,19 @@ Exemplo:
       }
     }
   }
+}
+```
+
+## GTIN
+
+Quando `codigoEan` ou `codigoEanTributavel` forem informados, o projeto valida GTIN-8, GTIN-12, GTIN-13 ou GTIN-14 pelo dígito verificador antes de gerar o XML. Quando o produto não possuir GTIN, omita o campo ou informe `SEM GTIN`.
+
+Exemplo:
+
+```json
+{
+  "codigoEan": "7891234567895",
+  "codigoEanTributavel": "7891234567895"
 }
 ```
 

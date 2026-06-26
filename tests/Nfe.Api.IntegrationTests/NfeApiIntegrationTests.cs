@@ -1,11 +1,15 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Nfe.Core;
 using Nfe.Api.Models;
+using Nfe.Api.Services;
 using Nfe.Shared;
 
 namespace Nfe.Api.IntegrationTests;
@@ -116,19 +120,94 @@ public sealed class NfeApiIntegrationTests
         Assert.Equal(1, fake.CertificadoInfoCalls);
     }
 
+    [Fact]
+    public async Task Schemas_DeveRetornarDiagnosticoQuandoXsdNaoEstaCarregado()
+    {
+        await using var factory = new TestApiFactory(
+            new FakeNfeConsultaService(),
+            "/tmp/nfe-schema-ausente");
+        var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/nfe/schemas");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        var payload = await response.Content.ReadAsStringAsync();
+        Assert.Contains("loaded", payload, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("false", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void QueueCredentialProtector_DeveProtegerCredenciaisSemTextoClaro()
+    {
+        var protector = CriarProtector();
+        var credentials = new QueueCredentials
+        {
+            CertificadoBase64 = "CERTIFICADO_SUPER_SECRETO",
+            CertificadoSenha = "SENHA_SUPER_SECRETA",
+            CertPemBase64 = "CERT_PEM_SUPER_SECRETO",
+            KeyPemBase64 = "KEY_PEM_SUPER_SECRETO"
+        };
+
+        var protectedCredentials = protector.Protect(credentials, "corr-123");
+        var message = new QueueMessage
+        {
+            CorrelationId = "corr-123",
+            UfEmitente = "SP",
+            Ambiente = "2",
+            Request = CriarRequestMinimo(),
+            CertificadoBase64 = string.Empty,
+            CertificadoSenha = string.Empty,
+            ProtectedCredentials = protectedCredentials,
+            GerarDanfe = false
+        };
+
+        var serialized = JsonSerializer.Serialize(message);
+
+        Assert.DoesNotContain(credentials.CertificadoBase64, serialized);
+        Assert.DoesNotContain(credentials.CertificadoSenha, serialized);
+        Assert.DoesNotContain(credentials.CertPemBase64, serialized);
+        Assert.DoesNotContain(credentials.KeyPemBase64, serialized);
+
+        var roundtrip = protector.Unprotect(protectedCredentials, "corr-123");
+        Assert.Equal(credentials.CertificadoBase64, roundtrip.CertificadoBase64);
+        Assert.Equal(credentials.CertificadoSenha, roundtrip.CertificadoSenha);
+        Assert.Equal(credentials.CertPemBase64, roundtrip.CertPemBase64);
+        Assert.Equal(credentials.KeyPemBase64, roundtrip.KeyPemBase64);
+    }
+
+    [Fact]
+    public void QueueCredentialProtector_DeveFalharSeCorrelationIdForAlterado()
+    {
+        var protector = CriarProtector();
+        var protectedCredentials = protector.Protect(new QueueCredentials
+        {
+            CertificadoBase64 = "CERTIFICADO_SUPER_SECRETO",
+            CertificadoSenha = "SENHA_SUPER_SECRETA"
+        }, "corr-original");
+
+        Assert.Throws<System.Security.Cryptography.AuthenticationTagMismatchException>(
+            () => protector.Unprotect(protectedCredentials, "corr-alterado"));
+    }
+
     private sealed class TestApiFactory : WebApplicationFactory<Program>
     {
         private readonly FakeNfeConsultaService _fakeConsulta;
+        private readonly string? _schemasPath;
 
-        public TestApiFactory(FakeNfeConsultaService fakeConsulta)
+        public TestApiFactory(FakeNfeConsultaService fakeConsulta, string? schemasPath = null)
         {
             _fakeConsulta = fakeConsulta;
+            _schemasPath = schemasPath;
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseSetting("Nfe:SkipSchemaSync", "true");
             builder.UseSetting("Nfe:DisableBackgroundWorker", "true");
+            if (!string.IsNullOrWhiteSpace(_schemasPath))
+            {
+                builder.UseSetting("Nfe:SchemasPath", _schemasPath);
+            }
 
             builder.ConfigureServices(services =>
             {
@@ -137,6 +216,64 @@ public sealed class NfeApiIntegrationTests
             });
         }
     }
+
+    private static QueueCredentialProtector CriarProtector()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Nfe:QueueProtectionKey"] = "0123456789abcdef0123456789abcdef"
+            })
+            .Build();
+
+        return new QueueCredentialProtector(configuration, NullLogger<QueueCredentialProtector>.Instance);
+    }
+
+    private static EmitirNfeRequest CriarRequestMinimo() => new()
+    {
+        AmbienteEmissao = "2",
+        Serie = "1",
+        NumeroNfe = 1,
+        NaturezaOperacao = "VENDA",
+        TipoOperacao = "1",
+        Emitente = new EmitenteRequest
+        {
+            Cnpj = "12345678000195",
+            RazaoSocial = "EMPRESA TESTE",
+            InscricaoEstadual = "110042490114",
+            CnaeFiscal = "2500000",
+            CodigoRegimeTributario = "3",
+            Endereco = new EnderecoRequest
+            {
+                Logradouro = "RUA TESTE",
+                Numero = "1",
+                Bairro = "CENTRO",
+                CodigoMunicipio = "3550308",
+                NomeMunicipio = "SAO PAULO",
+                Uf = "SP",
+                Cep = "01001000"
+            }
+        },
+        Destinatario = new DestinatarioRequest
+        {
+            Cnpj = "99999999000191",
+            NomeRazaoSocial = "CLIENTE TESTE",
+            IndicadorIe = "9",
+            Endereco = new EnderecoRequest
+            {
+                Logradouro = "RUA CLIENTE",
+                Numero = "2",
+                Bairro = "CENTRO",
+                CodigoMunicipio = "3550308",
+                NomeMunicipio = "SAO PAULO",
+                Uf = "SP",
+                Cep = "02002000"
+            }
+        },
+        Produtos = [],
+        Transporte = new TransporteRequest { ModalidadeFrete = "9" },
+        Pagamentos = []
+    };
 
     private sealed class FakeNfeConsultaService : INfeConsultaService
     {
@@ -148,13 +285,13 @@ public sealed class NfeApiIntegrationTests
         public int StatusServicoCalls { get; private set; }
         public int CertificadoInfoCalls { get; private set; }
 
-        public Task<Result<ConsultaNfeResult>> ConsultarChaveAsync(string chave, string certBase64, string senha, string ufEmitente, string ambiente)
+        public Task<Result<ConsultaNfeResult>> ConsultarChaveAsync(string chave, string certBase64, string senha, string ufEmitente, string ambiente, string? certPemBase64 = null, string? keyPemBase64 = null)
         {
             ConsultaCalls++;
             return Task.FromResult(ConsultaResult);
         }
 
-        public Task<Result<StatusServicoResult>> ConsultarStatusServicoAsync(string ufEmitente, string ambiente, string certBase64, string senha)
+        public Task<Result<StatusServicoResult>> ConsultarStatusServicoAsync(string ufEmitente, string ambiente, string certBase64, string senha, string? certPemBase64 = null, string? keyPemBase64 = null)
         {
             StatusServicoCalls++;
             return Task.FromResult(StatusServicoResult);

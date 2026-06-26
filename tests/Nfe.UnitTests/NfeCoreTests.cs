@@ -203,6 +203,90 @@ public sealed class NfeCoreTests
     }
 
     [Fact]
+    public void NfeRequestRules_DeveRejeitarGtinInvalido()
+    {
+        var request = CriarRequestValido();
+        var produto = request.Produtos[0] with
+        {
+            CodigoEan = "7891234567890"
+        };
+
+        var result = NfeRequestRules.NormalizeAndValidate(request with { Produtos = [produto] });
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("CodigoEan deve ser GTIN", result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task NfeXmlBuilder_DeveAceitarGtinValido()
+    {
+        var request = CriarRequestValido();
+        var produto = request.Produtos[0] with
+        {
+            CodigoEan = "7891234567895",
+            CodigoEanTributavel = "7891234567895"
+        };
+
+        var result = await new NfeXmlBuilder().BuildAsync(request with { Produtos = [produto] });
+
+        Assert.True(result.IsSuccess, result.ErrorMessage);
+        Assert.Contains("<cEAN>7891234567895</cEAN>", result.Value!.XmlNfe);
+        Assert.Contains("<cEANTrib>7891234567895</cEANTrib>", result.Value.XmlNfe);
+    }
+
+    [Fact]
+    public void NfeRequestRules_DeveRejeitarPercentualRtcMaiorQueCem()
+    {
+        var request = CriarRequestValido();
+        var produto = request.Produtos[0] with
+        {
+            Impostos = request.Produtos[0].Impostos with
+            {
+                IbsCbs = new IbsCbsRequest
+                {
+                    Cst = "410",
+                    CodigoClassificacaoTributaria = "410999",
+                    BaseCalculo = 100,
+                    IbsUf = new IbsUfRequest
+                    {
+                        Aliquota = 0.10m,
+                        Valor = 0.10m,
+                        PercentualDiferimento = 101
+                    }
+                }
+            }
+        };
+
+        var result = NfeRequestRules.NormalizeAndValidate(request with { Produtos = [produto] });
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("PercentualDiferimento nao pode ser maior que 100", result.ErrorMessage);
+    }
+
+    [Fact]
+    public void NfeXsdValidator_DevePermitirSelecionarSchemasPorNome()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"nfe-schema-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, "tiposBasico_PL_010C_v1.30.xsd"), CriarSchemaVazio());
+            File.WriteAllText(Path.Combine(dir, "nfe_PL_010C_v1.30.xsd"), CriarSchemaVazio());
+
+            var validator = new NfeXsdValidator(
+                dir,
+                "tiposBasico_PL_010C_v1.30.xsd",
+                "nfe_PL_010C_v1.30.xsd");
+
+            Assert.NotNull(validator);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task NfeXmlBuilder_DeveFormatarValorUnitarioSemZerosDesnecessarios()
     {
         var request = CriarRequestValido();
@@ -291,4 +375,13 @@ public sealed class NfeCoreTests
             new() { MeioPagamento = "15", Valor = 100 }
         }
     };
+
+    private static string CriarSchemaVazio() => """
+        <?xml version="1.0" encoding="utf-8"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   targetNamespace="http://www.portalfiscal.inf.br/nfe"
+                   xmlns="http://www.portalfiscal.inf.br/nfe"
+                   elementFormDefault="qualified">
+        </xs:schema>
+        """;
 }

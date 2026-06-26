@@ -70,7 +70,7 @@ COPY --from=icp-certs /icp-ca/ /usr/local/share/ca-certificates/
 
 RUN set -eu; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates; \
+    apt-get install -y --no-install-recommends ca-certificates curl; \
     update-ca-certificates; \
     rm -rf /var/lib/apt/lists/*
 
@@ -80,5 +80,7 @@ COPY --from=build /app/publish .
 # Expondo a porta padrão da API do container
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "Nfe.Api.dll"]

@@ -289,7 +289,7 @@ public sealed class NfeXmlBuilder : INfeXmlBuilder
         w.WriteStartElement("prod");
         w.WriteElementString("cProd", p.CodigoProduto.Truncar(60));
 
-        w.WriteElementString("cEAN", string.IsNullOrWhiteSpace(p.CodigoEan) ? "SEM GTIN" : p.CodigoEan);
+        w.WriteElementString("cEAN", GtinValidator.ToXmlValue(p.CodigoEan));
         if (!string.IsNullOrWhiteSpace(p.CodigoBarra)) w.WriteElementString("cBarra", p.CodigoBarra);
         w.WriteElementString("xProd", p.Descricao.Truncar(120));
         w.WriteElementString("NCM", p.NcmSh.OnlyDigits());
@@ -303,7 +303,7 @@ public sealed class NfeXmlBuilder : INfeXmlBuilder
         w.WriteElementString("vUnCom", p.ValorUnitarioComercial.ToNfeDecimalFlex(10));
         w.WriteElementString("vProd", p.ValorBruto.ToNfeDecimal(2));
 
-        w.WriteElementString("cEANTrib", string.IsNullOrWhiteSpace(p.CodigoEanTributavel) ? "SEM GTIN" : p.CodigoEanTributavel);
+        w.WriteElementString("cEANTrib", GtinValidator.ToXmlValue(p.CodigoEanTributavel));
         w.WriteElementString("uTrib", string.IsNullOrWhiteSpace(p.UnidadeTributavel) ? p.UnidadeComercial.Truncar(6) : p.UnidadeTributavel.Truncar(6));
         w.WriteElementString("qTrib", (p.QuantidadeTributavel == 0 ? p.QuantidadeComercial : p.QuantidadeTributavel).ToNfeDecimal(4));
         w.WriteElementString("vUnTrib", (p.ValorUnitarioTributavel == 0 ? p.ValorUnitarioComercial : p.ValorUnitarioTributavel).ToNfeDecimalFlex(10));
@@ -452,8 +452,8 @@ public sealed class NfeXmlBuilder : INfeXmlBuilder
     private static void EscreverIbsCbs(XmlWriter w, IbsCbsRequest ibsCbs)
     {
         w.WriteStartElement("IBSCBS");
-        w.WriteElementString("CST", ibsCbs.Cst);
-        w.WriteElementString("cClassTrib", ibsCbs.CodigoClassificacaoTributaria);
+        w.WriteElementString("CST", ibsCbs.Cst.OnlyDigits());
+        w.WriteElementString("cClassTrib", ibsCbs.CodigoClassificacaoTributaria.OnlyDigits());
 
         if (ibsCbs.BaseCalculo > 0 || ibsCbs.IbsUf != null || ibsCbs.IbsMunicipio != null || ibsCbs.Cbs != null)
         {
@@ -552,12 +552,16 @@ public sealed class NfeXmlBuilder : INfeXmlBuilder
         w.WriteEndElement();
 
         w.WriteElementString("vIBS", (t.ValorIbsUf + t.ValorIbsMunicipio).ToNfeDecimal(2));
+        w.WriteElementString("vCredPres", "0.00");
+        w.WriteElementString("vCredPresCondSus", "0.00");
         w.WriteEndElement();
 
         w.WriteStartElement("gCBS");
         w.WriteElementString("vDif", t.ValorDiferimentoCbs.ToNfeDecimal(2));
         w.WriteElementString("vDevTrib", t.ValorDevolucaoTributoCbs.ToNfeDecimal(2));
         w.WriteElementString("vCBS", t.ValorCbsReforma.ToNfeDecimal(2));
+        w.WriteElementString("vCredPres", "0.00");
+        w.WriteElementString("vCredPresCondSus", "0.00");
         w.WriteEndElement();
 
         w.WriteEndElement(); // </IBSCBSTot>

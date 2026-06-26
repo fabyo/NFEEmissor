@@ -12,13 +12,24 @@ public sealed class NfeXsdValidator
 {
     private readonly XmlSchemaSet _schemaSet;
     private readonly string _schemasPath;
+    private readonly string _tiposBasicosFileName;
+    private readonly string _nfeFileName;
 
-    public NfeXsdValidator(string schemasPath = "schemas/v4")
+    public NfeXsdValidator(
+        string schemasPath = "schemas/v4",
+        string? tiposBasicosFileName = null,
+        string? nfeFileName = null)
     {
         _schemasPath = schemasPath;
+        _tiposBasicosFileName = tiposBasicosFileName ?? DescobrirSchema(_schemasPath, "tiposBasico*.xsd", "tiposBasico");
+        _nfeFileName = nfeFileName ?? DescobrirSchema(_schemasPath, "nfe*.xsd", "nfe_v");
         _schemaSet = new XmlSchemaSet();
         CarregarSchemas();
     }
+
+    public string SchemasPath => _schemasPath;
+    public string TiposBasicosFileName => _tiposBasicosFileName;
+    public string NfeFileName => _nfeFileName;
 
     /// <returns>Lista de erros de validação; vazia se o XML é válido.</returns>
     public IReadOnlyList<string> Validar(string xmlNfe)
@@ -55,20 +66,37 @@ public sealed class NfeXsdValidator
 
     private void CarregarSchemas()
     {
-        var tiposBasicosPath = Path.Combine(_schemasPath, "tiposBasico_v4.00.xsd");
-        var nfePath = Path.Combine(_schemasPath, "nfe_v4.00.xsd");
+        var tiposBasicosPath = Path.Combine(_schemasPath, _tiposBasicosFileName);
+        var nfePath = Path.Combine(_schemasPath, _nfeFileName);
 
         if (!File.Exists(tiposBasicosPath) || !File.Exists(nfePath))
         {
-            throw new DirectoryNotFoundException($"Schemas XSD oficiais não encontrados em {_schemasPath}. Execute NFeSchemaManager para sincronizar.");
+            throw new DirectoryNotFoundException(
+                $"Schemas XSD oficiais não encontrados em {_schemasPath}. " +
+                $"Esperado: {_tiposBasicosFileName} e {_nfeFileName}. Execute NFeSchemaManager para sincronizar.");
         }
 
-        using var tiposStream = File.OpenRead(tiposBasicosPath);
-        using var nfeStream = File.OpenRead(nfePath);
-
-        _schemaSet.Add("http://www.portalfiscal.inf.br/nfe", XmlReader.Create(tiposStream));
-        _schemaSet.Add("http://www.portalfiscal.inf.br/nfe", XmlReader.Create(nfeStream));
+        _schemaSet.XmlResolver = new XmlUrlResolver();
+        _schemaSet.Add("http://www.portalfiscal.inf.br/nfe", XmlReader.Create(nfePath));
         _schemaSet.Compile();
+    }
+
+    private static string DescobrirSchema(string schemasPath, string searchPattern, string preferredPrefix)
+    {
+        if (!Directory.Exists(schemasPath))
+        {
+            return searchPattern.Replace("*", "_v4.00");
+        }
+
+        var files = Directory
+            .EnumerateFiles(schemasPath, searchPattern, SearchOption.TopDirectoryOnly)
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Where(name => name!.StartsWith(preferredPrefix, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return files.FirstOrDefault() ?? searchPattern.Replace("*", "_v4.00");
     }
 }
 

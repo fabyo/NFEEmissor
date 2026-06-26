@@ -48,7 +48,9 @@ public static class SefazCodigosHelper
             InutilizacaoProd:   "https://nfe.fazenda.sp.gov.br/ws/nfeinutilizacao4.asmx",
             InutilizacaoHom:    "https://homologacao.nfe.fazenda.sp.gov.br/ws/nfeinutilizacao4.asmx",
             RetornoAutorizacaoProd: "https://nfe.fazenda.sp.gov.br/ws/nferetautorizacao4.asmx",
-            RetornoAutorizacaoHom:  "https://homologacao.nfe.fazenda.sp.gov.br/ws/nferetautorizacao4.asmx"
+            RetornoAutorizacaoHom:  "https://homologacao.nfe.fazenda.sp.gov.br/ws/nferetautorizacao4.asmx",
+            RecepcaoEventoProd: "https://nfe.fazenda.sp.gov.br/ws/nferecepcaoevento4.asmx",
+            RecepcaoEventoHom:  "https://homologacao.nfe.fazenda.sp.gov.br/ws/nferecepcaoevento4.asmx"
         ),
         ["MG"] = new(
             AutorizacaoProd:    "https://nfe.fazenda.mg.gov.br/nfe2/services/NFeAutorizacao4",
@@ -58,7 +60,9 @@ public static class SefazCodigosHelper
             InutilizacaoProd:   "https://nfe.fazenda.mg.gov.br/nfe2/services/NFeInutilizacao4",
             InutilizacaoHom:    "https://hnfe.fazenda.mg.gov.br/nfe2/services/NFeInutilizacao4",
             RetornoAutorizacaoProd: "https://nfe.fazenda.mg.gov.br/nfe2/services/NFeRetAutorizacao4",
-            RetornoAutorizacaoHom:  "https://hnfe.fazenda.mg.gov.br/nfe2/services/NFeRetAutorizacao4"
+            RetornoAutorizacaoHom:  "https://hnfe.fazenda.mg.gov.br/nfe2/services/NFeRetAutorizacao4",
+            RecepcaoEventoProd: "https://nfe.fazenda.mg.gov.br/nfe2/services/NFeRecepcaoEvento4",
+            RecepcaoEventoHom:  "https://hnfe.fazenda.mg.gov.br/nfe2/services/NFeRecepcaoEvento4"
         ),
         ["RS"] = new(
             AutorizacaoProd:    "https://nfe.sefaz.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx",
@@ -68,7 +72,9 @@ public static class SefazCodigosHelper
             InutilizacaoProd:   "https://nfe.sefaz.rs.gov.br/ws/NfeInutilizacao/NfeInutilizacao4.asmx",
             InutilizacaoHom:    "https://nfe-homologacao.sefazrs.rs.gov.br/ws/NfeInutilizacao/NfeInutilizacao4.asmx",
             RetornoAutorizacaoProd: "https://nfe.sefaz.rs.gov.br/ws/NfeRetAutorizacao/NfeRetAutorizacao4.asmx",
-            RetornoAutorizacaoHom:  "https://nfe-homologacao.sefazrs.rs.gov.br/ws/NfeRetAutorizacao/NfeRetAutorizacao4.asmx"
+            RetornoAutorizacaoHom:  "https://nfe-homologacao.sefazrs.rs.gov.br/ws/NfeRetAutorizacao/NfeRetAutorizacao4.asmx",
+            RecepcaoEventoProd: "https://nfe.sefaz.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx",
+            RecepcaoEventoHom:  "https://nfe-homologacao.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx"
         ),
         ["PR"] = new(
             AutorizacaoProd:    "https://nfe.sefa.pr.gov.br/nfe/NFeAutorizacao4",
@@ -78,7 +84,9 @@ public static class SefazCodigosHelper
             InutilizacaoProd:   "https://nfe.sefa.pr.gov.br/nfe/NFeInutilizacao4",
             InutilizacaoHom:    "https://homologacao.nfe.sefa.pr.gov.br/nfe/NFeInutilizacao4",
             RetornoAutorizacaoProd: "https://nfe.sefa.pr.gov.br/nfe/NFeRetAutorizacao4",
-            RetornoAutorizacaoHom:  "https://homologacao.nfe.sefa.pr.gov.br/nfe/NFeRetAutorizacao4"
+            RetornoAutorizacaoHom:  "https://homologacao.nfe.sefa.pr.gov.br/nfe/NFeRetAutorizacao4",
+            RecepcaoEventoProd: "https://nfe.sefa.pr.gov.br/nfe/NFeRecepcaoEvento4",
+            RecepcaoEventoHom:  "https://homologacao.nfe.sefa.pr.gov.br/nfe/NFeRecepcaoEvento4"
         ),
         // UFs que usam SVRS (Sefaz-RS como autorizador) em homologação:
         // AC, AL, AP, CE, DF, ES, PB, PI, RJ, RN, RO, RR, SC, SE, TO
@@ -94,7 +102,9 @@ public static class SefazCodigosHelper
         InutilizacaoProd:   "https://nfe.svrs.rs.gov.br/ws/NfeInutilizacao/NfeInutilizacao4.asmx",
         InutilizacaoHom:    "https://nfe-homologacao.svrs.rs.gov.br/ws/NfeInutilizacao/NfeInutilizacao4.asmx",
         RetornoAutorizacaoProd: "https://nfe.svrs.rs.gov.br/ws/NfeRetAutorizacao/NfeRetAutorizacao4.asmx",
-        RetornoAutorizacaoHom:  "https://nfe-homologacao.svrs.rs.gov.br/ws/NfeRetAutorizacao/NfeRetAutorizacao4.asmx"
+        RetornoAutorizacaoHom:  "https://nfe-homologacao.svrs.rs.gov.br/ws/NfeRetAutorizacao/NfeRetAutorizacao4.asmx",
+        RecepcaoEventoProd: "https://nfe.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx",
+        RecepcaoEventoHom:  "https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx"
     );
 
     public static SefazEndpoints ObterEndpoints(string uf)
@@ -117,6 +127,18 @@ public static class SefazCodigosHelper
         var ep = ObterEndpoints(uf);
         return ambiente == "1" ? ep.ConsultaProd : ep.ConsultaHom;
     }
+
+    public static string ObterUrlInutilizacao(string uf, string ambiente)
+    {
+        var ep = ObterEndpoints(uf);
+        return ambiente == "1" ? ep.InutilizacaoProd : ep.InutilizacaoHom;
+    }
+
+    public static string ObterUrlRecepcaoEvento(string uf, string ambiente)
+    {
+        var ep = ObterEndpoints(uf);
+        return ambiente == "1" ? ep.RecepcaoEventoProd : ep.RecepcaoEventoHom;
+    }
 }
 
 public sealed record SefazEndpoints(
@@ -127,5 +149,7 @@ public sealed record SefazEndpoints(
     string InutilizacaoProd,
     string InutilizacaoHom,
     string RetornoAutorizacaoProd,
-    string RetornoAutorizacaoHom
+    string RetornoAutorizacaoHom,
+    string RecepcaoEventoProd,
+    string RecepcaoEventoHom
 );

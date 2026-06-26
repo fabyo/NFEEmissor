@@ -58,6 +58,130 @@ public sealed class NfeOfflineIntegrationTests
         Assert.Equal("35260612345678000195550010000000011000000010", erro.ChaveAcesso);
     }
 
+    [Fact]
+    public void EventoService_DeveMontarXmlCancelamento()
+    {
+        var service = new NfeEventoService(new NfeAssinadorService());
+
+        var result = service.MontarXmlCancelamento(new CancelarNfeRequest
+        {
+            Ambiente = "2",
+            Uf = "SP",
+            ChaveAcesso = "35260612345678000195550010000000011000000010",
+            CnpjEmitente = "12.345.678/0001-95",
+            ProtocoloAutorizacao = "135000000000000",
+            Justificativa = "Erro operacional identificado apos autorizacao"
+        });
+
+        Assert.True(result.IsSuccess, result.ErrorMessage);
+        var doc = new XmlDocument();
+        doc.LoadXml(result.Value!);
+
+        var ns = new XmlNamespaceManager(doc.NameTable);
+        ns.AddNamespace("nfe", "http://www.portalfiscal.inf.br/nfe");
+
+        Assert.Equal("evento", doc.DocumentElement!.LocalName);
+        Assert.Equal("ID1101113526061234567800019555001000000001100000001001", doc.SelectSingleNode("//nfe:infEvento", ns)?.Attributes?["Id"]?.Value);
+        Assert.Equal("Cancelamento", doc.SelectSingleNode("//nfe:detEvento/nfe:descEvento", ns)?.InnerText);
+        Assert.Equal("135000000000000", doc.SelectSingleNode("//nfe:detEvento/nfe:nProt", ns)?.InnerText);
+    }
+
+    [Fact]
+    public void EventoService_DeveMontarXmlCartaCorrecao()
+    {
+        var service = new NfeEventoService(new NfeAssinadorService());
+
+        var result = service.MontarXmlCartaCorrecao(new CartaCorrecaoRequest
+        {
+            Ambiente = "2",
+            Uf = "SP",
+            ChaveAcesso = "35260612345678000195550010000000011000000010",
+            CnpjEmitente = "12345678000195",
+            SequenciaEvento = 2,
+            Correcao = "Correção do texto das informações adicionais da nota fiscal"
+        });
+
+        Assert.True(result.IsSuccess, result.ErrorMessage);
+        var doc = new XmlDocument();
+        doc.LoadXml(result.Value!);
+
+        var ns = new XmlNamespaceManager(doc.NameTable);
+        ns.AddNamespace("nfe", "http://www.portalfiscal.inf.br/nfe");
+
+        Assert.Equal("ID1101103526061234567800019555001000000001100000001002", doc.SelectSingleNode("//nfe:infEvento", ns)?.Attributes?["Id"]?.Value);
+        Assert.Equal("Carta de Correcao", doc.SelectSingleNode("//nfe:detEvento/nfe:descEvento", ns)?.InnerText);
+        Assert.Contains("informações adicionais", doc.SelectSingleNode("//nfe:detEvento/nfe:xCorrecao", ns)?.InnerText);
+        Assert.NotNull(doc.SelectSingleNode("//nfe:detEvento/nfe:xCondUso", ns));
+    }
+
+    [Fact]
+    public void EventoService_DeveMontarXmlInutilizacao()
+    {
+        var service = new NfeEventoService(new NfeAssinadorService());
+
+        var result = service.MontarXmlInutilizacao(new InutilizarNumeracaoRequest
+        {
+            Ambiente = "2",
+            Uf = "SP",
+            CnpjEmitente = "12.345.678/0001-95",
+            Ano = "2026",
+            Serie = "1",
+            NumeroInicial = 10,
+            NumeroFinal = 12,
+            Justificativa = "Quebra de sequência por erro operacional interno"
+        });
+
+        Assert.True(result.IsSuccess, result.ErrorMessage);
+        var doc = new XmlDocument();
+        doc.LoadXml(result.Value!);
+
+        var ns = new XmlNamespaceManager(doc.NameTable);
+        ns.AddNamespace("nfe", "http://www.portalfiscal.inf.br/nfe");
+
+        Assert.Equal("inutNFe", doc.DocumentElement!.LocalName);
+        Assert.Equal("ID35261234567800019555001000000010000000012", doc.SelectSingleNode("//nfe:infInut", ns)?.Attributes?["Id"]?.Value);
+        Assert.Equal("10", doc.SelectSingleNode("//nfe:infInut/nfe:nNFIni", ns)?.InnerText);
+        Assert.Equal("12", doc.SelectSingleNode("//nfe:infInut/nfe:nNFFin", ns)?.InnerText);
+    }
+
+    [Fact]
+    public void EventoService_DeveParsearRetornoEvento()
+    {
+        var method = typeof(NfeEventoService).GetMethod("ParsearRetornoEvento", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+
+        var result = (Result<NfeEventoResult>)method!.Invoke(null, [
+            CriarRetornoEventoAutorizado(),
+            CriarXmlEventoAssinadoMinimo(),
+            "35260612345678000195550010000000011000000010",
+            "110111",
+            1
+        ])!;
+
+        Assert.True(result.IsSuccess, result.ErrorMessage);
+        Assert.Equal("135", result.Value!.Status);
+        Assert.Equal("135000000000001", result.Value.Protocolo);
+        Assert.Contains("<procEventoNFe", result.Value.XmlProcEventoNfe);
+    }
+
+    [Fact]
+    public void EventoService_DeveParsearRetornoInutilizacao()
+    {
+        var method = typeof(NfeEventoService).GetMethod("ParsearRetornoInutilizacao", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+
+        var result = (Result<NfeInutilizacaoResult>)method!.Invoke(null, [
+            CriarRetornoInutilizacaoAutorizada(),
+            "<inutNFe xmlns=\"http://www.portalfiscal.inf.br/nfe\" versao=\"4.00\" />"
+        ])!;
+
+        Assert.True(result.IsSuccess, result.ErrorMessage);
+        Assert.Equal("102", result.Value!.Status);
+        Assert.Equal("135000000000002", result.Value.Protocolo);
+        Assert.Equal(10, result.Value.NumeroInicial);
+        Assert.Equal(12, result.Value.NumeroFinal);
+    }
+
     private static string CriarXmlNfeAssinadoMinimo() => """
         <?xml version="1.0" encoding="utf-8"?>
         <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
@@ -185,6 +309,86 @@ public sealed class NfeOfflineIntegrationTests
                   </infProt>
                 </protNFe>
               </retEnviNFe>
+            </nfeResultMsg>
+          </soap:Body>
+        </soap:Envelope>
+        """;
+
+    private static string CriarXmlEventoAssinadoMinimo() => """
+        <evento versao="1.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+          <infEvento Id="ID1101113526061234567800019555001000000001100000001001">
+            <cOrgao>35</cOrgao>
+            <tpAmb>2</tpAmb>
+            <CNPJ>12345678000195</CNPJ>
+            <chNFe>35260612345678000195550010000000011000000010</chNFe>
+            <dhEvento>2026-06-25T10:00:00-03:00</dhEvento>
+            <tpEvento>110111</tpEvento>
+            <nSeqEvento>1</nSeqEvento>
+            <verEvento>1.00</verEvento>
+            <detEvento versao="1.00">
+              <descEvento>Cancelamento</descEvento>
+              <nProt>135000000000000</nProt>
+              <xJust>Erro operacional identificado apos autorizacao</xJust>
+            </detEvento>
+          </infEvento>
+          <Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo /></Signature>
+        </evento>
+        """;
+
+    private static string CriarRetornoEventoAutorizado() => """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+          <soap:Body>
+            <nfeResultMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4">
+              <retEnvEvento versao="1.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+                <idLote>1</idLote>
+                <tpAmb>2</tpAmb>
+                <verAplic>SP_EVENTOS</verAplic>
+                <cOrgao>35</cOrgao>
+                <cStat>128</cStat>
+                <xMotivo>Lote de Evento Processado</xMotivo>
+                <retEvento versao="1.00">
+                  <infEvento>
+                    <tpAmb>2</tpAmb>
+                    <verAplic>SP_EVENTOS</verAplic>
+                    <cOrgao>35</cOrgao>
+                    <cStat>135</cStat>
+                    <xMotivo>Evento registrado e vinculado a NF-e</xMotivo>
+                    <chNFe>35260612345678000195550010000000011000000010</chNFe>
+                    <tpEvento>110111</tpEvento>
+                    <xEvento>Cancelamento</xEvento>
+                    <nSeqEvento>1</nSeqEvento>
+                    <nProt>135000000000001</nProt>
+                  </infEvento>
+                </retEvento>
+              </retEnvEvento>
+            </nfeResultMsg>
+          </soap:Body>
+        </soap:Envelope>
+        """;
+
+    private static string CriarRetornoInutilizacaoAutorizada() => """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+          <soap:Body>
+            <nfeResultMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4">
+              <retInutNFe versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+                <infInut>
+                  <tpAmb>2</tpAmb>
+                  <verAplic>SP_INUTILIZACAO</verAplic>
+                  <cStat>102</cStat>
+                  <xMotivo>Inutilizacao de numero homologado</xMotivo>
+                  <cUF>35</cUF>
+                  <ano>26</ano>
+                  <CNPJ>12345678000195</CNPJ>
+                  <mod>55</mod>
+                  <serie>1</serie>
+                  <nNFIni>10</nNFIni>
+                  <nNFFin>12</nNFFin>
+                  <dhRecbto>2026-06-25T10:00:03-03:00</dhRecbto>
+                  <nProt>135000000000002</nProt>
+                </infInut>
+              </retInutNFe>
             </nfeResultMsg>
           </soap:Body>
         </soap:Envelope>

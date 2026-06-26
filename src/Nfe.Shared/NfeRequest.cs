@@ -350,3 +350,42 @@ public sealed record CartaoRequest
     public string? BandeiraOperadora { get; init; }
     public string? NumeroAutorizacao { get; init; }
 }
+
+// ─────────────────────────────────────────────
+// Eventos e inutilização de NF-e
+// ─────────────────────────────────────────────
+public sealed record CancelarNfeRequest
+{
+    /// <summary>1 = Produção | 2 = Homologação</summary>
+    public required string Ambiente { get; init; }
+    public required string Uf { get; init; }
+    public required string ChaveAcesso { get; init; }
+    public required string CnpjEmitente { get; init; }
+    public required string ProtocoloAutorizacao { get; init; }
+    public required string Justificativa { get; init; }
+}
+
+public sealed record CartaCorrecaoRequest
+{
+    /// <summary>1 = Produção | 2 = Homologação</summary>
+    public required string Ambiente { get; init; }
+    public required string Uf { get; init; }
+    public required string ChaveAcesso { get; init; }
+    public required string CnpjEmitente { get; init; }
+    public int SequenciaEvento { get; init; } = 1;
+    public required string Correcao { get; init; }
+}
+
+public sealed record InutilizarNumeracaoRequest
+{
+    /// <summary>1 = Produção | 2 = Homologação</summary>
+    public required string Ambiente { get; init; }
+    public required string Uf { get; init; }
+    public required string CnpjEmitente { get; init; }
+    public required string Ano { get; init; }
+    public string Modelo { get; init; } = "55";
+    public required string Serie { get; init; }
+    public required long NumeroInicial { get; init; }
+    public required long NumeroFinal { get; init; }
+    public required string Justificativa { get; init; }
+}

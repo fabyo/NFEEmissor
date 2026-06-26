@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nfe.Api.Models;
@@ -13,6 +14,7 @@ public sealed class NfeQueueWorker : BackgroundService
     private readonly IConnectionMultiplexer _redis;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<NfeQueueWorker> _logger;
+    private readonly IConfiguration _configuration;
 
     private const string QueueName = "nfe-emissao-queue";
     private const string StatusKeyPrefix = "nfe-status:";
@@ -22,11 +24,13 @@ public sealed class NfeQueueWorker : BackgroundService
     public NfeQueueWorker(
         IConnectionMultiplexer redis,
         IServiceProvider serviceProvider,
-        ILogger<NfeQueueWorker> logger)
+        ILogger<NfeQueueWorker> logger,
+        IConfiguration configuration)
     {
         _redis = redis;
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -91,6 +95,8 @@ public sealed class NfeQueueWorker : BackgroundService
             var assinador = scope.ServiceProvider.GetRequiredService<INfeAssinadorService>();
             var sefaz = scope.ServiceProvider.GetRequiredService<INfeSefazService>();
             var storage = scope.ServiceProvider.GetRequiredService<INfeStorage>();
+            var credentialProtector = scope.ServiceProvider.GetRequiredService<IQueueCredentialProtector>();
+            var credentials = ObterCredenciais(msg, credentialProtector);
 
             // 1. Gera XML
             var xmlBuildResult = await xmlBuilder.BuildAsync(msg.Request, ct);
@@ -103,13 +109,13 @@ public sealed class NfeQueueWorker : BackgroundService
             var buildVal = xmlBuildResult.Value!;
 
             // 2. Assina — usa PEM se disponivel, caso contrario usa PFX (Base64)
-            var usandoPem = !string.IsNullOrWhiteSpace(msg.CertPemBase64) && !string.IsNullOrWhiteSpace(msg.KeyPemBase64);
+            var usandoPem = !string.IsNullOrWhiteSpace(credentials.CertPemBase64) && !string.IsNullOrWhiteSpace(credentials.KeyPemBase64);
             var assResult = usandoPem
                 ? assinador.AssinarComPemConteudo(
                     buildVal.XmlNfe,
-                    System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(msg.CertPemBase64!)),
-                    System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(msg.KeyPemBase64!)))
-                : assinador.Assinar(buildVal.XmlNfe, msg.CertificadoBase64, msg.CertificadoSenha);
+                    System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(credentials.CertPemBase64!)),
+                    System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(credentials.KeyPemBase64!)))
+                : assinador.Assinar(buildVal.XmlNfe, credentials.CertificadoBase64, credentials.CertificadoSenha);
 
             _logger.LogInformation("Assinando com {Modo}. CorrelationId: {CorrId}",
                 usandoPem ? "PEM" : "PFX", msg.CorrelationId);
@@ -120,16 +126,40 @@ public sealed class NfeQueueWorker : BackgroundService
             }
 
             var assVal = assResult.Value!;
+            if (_configuration.GetValue("Nfe:ValidateXsdBeforeSend", true))
+            {
+                NfeXsdValidator validator;
+                try
+                {
+                    validator = scope.ServiceProvider.GetRequiredService<NfeXsdValidator>();
+                }
+                catch (Exception ex)
+                {
+                    await FinalizarComErroAsync(
+                        db,
+                        statusKey,
+                        "XSD_SCHEMA_INDISPONIVEL",
+                        $"Não foi possível carregar os schemas XSD para validar a NF-e antes do envio: {ex.Message}");
+                    return;
+                }
+
+                var xsdResult = assVal.XmlAssinado.ValidarXsd(validator);
+                if (!xsdResult.IsSuccess)
+                {
+                    await FinalizarComErroAsync(db, statusKey, xsdResult.ErrorCode!, xsdResult.ErrorMessage!);
+                    return;
+                }
+            }
 
             // 3. Envia para a SEFAZ
             var sefazResult = await sefaz.AutorizarAsync(
                 assVal.XmlAssinado,
                 msg.UfEmitente,
                 msg.Ambiente,
-                msg.CertificadoBase64,
-                msg.CertificadoSenha,
-                msg.CertPemBase64,
-                msg.KeyPemBase64,
+                credentials.CertificadoBase64,
+                credentials.CertificadoSenha,
+                credentials.CertPemBase64,
+                credentials.KeyPemBase64,
                 ct);
             if (!sefazResult.IsSuccess)
             {
@@ -236,6 +266,22 @@ public sealed class NfeQueueWorker : BackgroundService
 
     private static string ObterSefazBackoffKey(string uf, string ambiente)
         => $"nfe-sefaz-backoff:{uf.ToUpperInvariant()}:{ambiente}";
+
+    private static QueueCredentials ObterCredenciais(QueueMessage msg, IQueueCredentialProtector credentialProtector)
+    {
+        if (msg.ProtectedCredentials is not null)
+        {
+            return credentialProtector.Unprotect(msg.ProtectedCredentials, msg.CorrelationId);
+        }
+
+        return new QueueCredentials
+        {
+            CertificadoBase64 = msg.CertificadoBase64,
+            CertificadoSenha = msg.CertificadoSenha,
+            CertPemBase64 = msg.CertPemBase64,
+            KeyPemBase64 = msg.KeyPemBase64
+        };
+    }
 
     private static SefazErroApiResponse? ExtrairErroSefaz(Exception? exception)
     {

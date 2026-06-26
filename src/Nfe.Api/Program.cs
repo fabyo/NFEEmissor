@@ -38,12 +38,18 @@ builder.Services.AddScoped<INfeSefazService, NfeSefazService>();
 builder.Services.AddScoped<INfeXmlBuilder, NfeXmlBuilder>();
 builder.Services.AddScoped<INfeAssinadorService, NfeAssinadorService>();
 builder.Services.AddScoped<INfeConsultaService, NfeConsultaService>();
+builder.Services.AddScoped<INfeEventoService, NfeEventoService>();
 builder.Services.AddSingleton<INfeStorage, NoopNfeStorage>();
+builder.Services.AddSingleton<IQueueCredentialProtector, QueueCredentialProtector>();
 builder.Services.AddSingleton<NfeXsdValidator>(sp =>
 {
-    var schemasDir = Path.Combine(AppContext.BaseDirectory, "schemas", "v4");
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var schemasDir = configuration["Nfe:SchemasPath"] ?? Path.Combine(AppContext.BaseDirectory, "schemas", "v4");
     if (!Directory.Exists(schemasDir)) Directory.CreateDirectory(schemasDir);
-    return new NfeXsdValidator(schemasDir);
+    return new NfeXsdValidator(
+        schemasDir,
+        configuration["Nfe:TiposBasicosSchema"],
+        configuration["Nfe:NfeSchema"]);
 });
 
 // Registra Redis
@@ -52,6 +58,9 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     var conn = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
     return ConnectionMultiplexer.Connect(conn);
 });
+builder.Services
+    .AddHealthChecks()
+    .AddCheck<RedisHealthCheck>("redis");
 
 // Registra o Worker em Background da fila do Redis, exceto em cenários de teste/integracao controlada
 if (!builder.Configuration.GetValue<bool>("Nfe:DisableBackgroundWorker"))
@@ -67,6 +76,8 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
+app.MapHealthChecks("/health");
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -75,7 +86,7 @@ if (app.Environment.IsDevelopment())
 
 // Startup task: Schemas XSD da SEFAZ
 var skipSchemaSync = builder.Configuration.GetValue<bool>("Nfe:SkipSchemaSync");
-var schemasDir = Path.Combine(AppContext.BaseDirectory, "schemas", "v4");
+var schemasDir = builder.Configuration["Nfe:SchemasPath"] ?? Path.Combine(AppContext.BaseDirectory, "schemas", "v4");
 if (!skipSchemaSync && (!Directory.Exists(schemasDir) || !Directory.EnumerateFiles(schemasDir, "*.xsd").Any()))
 {
     try
@@ -105,7 +116,8 @@ api.MapPost("/nfe/emitir", async (
     [FromHeader(Name = "X-Cert-Pem-Base64")] string? certPemHeader,
     [FromHeader(Name = "X-Key-Pem-Base64")] string? keyPemHeader,
     [FromQuery] bool gerarDanfe,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IQueueCredentialProtector credentialProtector) =>
 {
     var cert = certHeader;
     var senha = senhaHeader ?? string.Empty;
@@ -170,17 +182,26 @@ api.MapPost("/nfe/emitir", async (
         return Results.Conflict(new { Error = "Esta nota já foi enviada para processamento.", CorrelationId = existingCorrId.ToString() });
     }
 
-    // Cria a mensagem
+    var protectedCredentials = credentialProtector.Protect(new QueueCredentials
+    {
+        CertificadoBase64 = cert ?? string.Empty,
+        CertificadoSenha = senha,
+        CertPemBase64 = certPemHeader,
+        KeyPemBase64 = keyPemHeader
+    }, correlationId);
+
+    // Cria a mensagem sem credenciais fiscais em claro na fila Redis.
     var msg = new QueueMessage
     {
         CorrelationId = correlationId,
         UfEmitente = request.Emitente.Endereco.Uf,
         Ambiente = request.AmbienteEmissao,
         Request = request,
-        CertificadoBase64 = cert ?? string.Empty,
-        CertificadoSenha = senha,
-        CertPemBase64 = certPemHeader,
-        KeyPemBase64 = keyPemHeader,
+        CertificadoBase64 = string.Empty,
+        CertificadoSenha = string.Empty,
+        CertPemBase64 = null,
+        KeyPemBase64 = null,
+        ProtectedCredentials = protectedCredentials,
         GerarDanfe = gerarDanfe
     };
 
@@ -220,12 +241,54 @@ api.MapGet("/nfe/status/{correlationId}", async (string correlationId, IConnecti
 api.MapGet("/nfe/status-servico", async (
     [FromQuery] string uf,
     [FromQuery] string ambiente,
-    [FromHeader(Name = "X-Certificado-Base64")] string cert,
-    [FromHeader(Name = "X-Certificado-Senha")] string? senha,
+    [FromHeader(Name = "X-Certificado-Base64")] string? certHeader,
+    [FromHeader(Name = "X-Certificado-Senha")] string? senhaHeader,
+    [FromHeader(Name = "X-Cert-Pem-Base64")] string? certPemHeader,
+    [FromHeader(Name = "X-Key-Pem-Base64")] string? keyPemHeader,
     INfeConsultaService consultaService) =>
 {
-    var res = await consultaService.ConsultarStatusServicoAsync(uf, ambiente, cert, senha ?? string.Empty);
+    var certResult = PrepararCertificadoConsulta(certHeader, senhaHeader, certPemHeader, keyPemHeader);
+    if (!certResult.IsSuccess)
+    {
+        return Results.BadRequest(new { Error = certResult.ErrorMessage });
+    }
+
+    var cert = certResult.Value!;
+    var res = await consultaService.ConsultarStatusServicoAsync(uf, ambiente, cert.CertificadoBase64, cert.Senha);
     return res.IsSuccess ? Results.Ok(res.Value) : Results.UnprocessableEntity(res);
+});
+
+api.MapGet("/nfe/schemas", (IServiceProvider services, IConfiguration configuration) =>
+{
+    var schemasDir = configuration["Nfe:SchemasPath"] ?? Path.Combine(AppContext.BaseDirectory, "schemas", "v4");
+    var validateBeforeSend = configuration.GetValue("Nfe:ValidateXsdBeforeSend", true);
+
+    try
+    {
+        var validator = services.GetRequiredService<NfeXsdValidator>();
+        return Results.Ok(new
+        {
+            schemasPath = validator.SchemasPath,
+            tiposBasicosSchema = validator.TiposBasicosFileName,
+            nfeSchema = validator.NfeFileName,
+            validateXsdBeforeSend = validateBeforeSend,
+            loaded = true
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(
+            new
+            {
+                schemasPath = schemasDir,
+                tiposBasicosSchema = configuration["Nfe:TiposBasicosSchema"],
+                nfeSchema = configuration["Nfe:NfeSchema"],
+                validateXsdBeforeSend = validateBeforeSend,
+                loaded = false,
+                error = ex.Message
+            },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
 });
 
 api.MapGet("/nfe/consulta", async (
@@ -252,6 +315,87 @@ api.MapGet("/nfe/consulta", async (
 
     var cert = certResult.Value!;
     var res = await consultaService.ConsultarChaveAsync(chave, cert.CertificadoBase64, cert.Senha, uf, ambiente);
+    return res.IsSuccess ? Results.Ok(res.Value) : Results.UnprocessableEntity(res);
+});
+
+api.MapPost("/nfe/cancelar", async (
+    CancelarNfeRequest request,
+    [FromHeader(Name = "X-Certificado-Base64")] string? certHeader,
+    [FromHeader(Name = "X-Certificado-Senha")] string? senhaHeader,
+    [FromHeader(Name = "X-Cert-Pem-Base64")] string? certPemHeader,
+    [FromHeader(Name = "X-Key-Pem-Base64")] string? keyPemHeader,
+    INfeEventoService eventoService,
+    CancellationToken ct) =>
+{
+    var certResult = PrepararCertificadoConsulta(certHeader, senhaHeader, certPemHeader, keyPemHeader);
+    if (!certResult.IsSuccess)
+    {
+        return Results.BadRequest(new { Error = certResult.ErrorMessage });
+    }
+
+    var cert = certResult.Value!;
+    var res = await eventoService.CancelarAsync(
+        request,
+        cert.CertificadoBase64,
+        cert.Senha,
+        certPemHeader,
+        keyPemHeader,
+        ct);
+
+    return res.IsSuccess ? Results.Ok(res.Value) : Results.UnprocessableEntity(res);
+});
+
+api.MapPost("/nfe/cce", async (
+    CartaCorrecaoRequest request,
+    [FromHeader(Name = "X-Certificado-Base64")] string? certHeader,
+    [FromHeader(Name = "X-Certificado-Senha")] string? senhaHeader,
+    [FromHeader(Name = "X-Cert-Pem-Base64")] string? certPemHeader,
+    [FromHeader(Name = "X-Key-Pem-Base64")] string? keyPemHeader,
+    INfeEventoService eventoService,
+    CancellationToken ct) =>
+{
+    var certResult = PrepararCertificadoConsulta(certHeader, senhaHeader, certPemHeader, keyPemHeader);
+    if (!certResult.IsSuccess)
+    {
+        return Results.BadRequest(new { Error = certResult.ErrorMessage });
+    }
+
+    var cert = certResult.Value!;
+    var res = await eventoService.RegistrarCartaCorrecaoAsync(
+        request,
+        cert.CertificadoBase64,
+        cert.Senha,
+        certPemHeader,
+        keyPemHeader,
+        ct);
+
+    return res.IsSuccess ? Results.Ok(res.Value) : Results.UnprocessableEntity(res);
+});
+
+api.MapPost("/nfe/inutilizar", async (
+    InutilizarNumeracaoRequest request,
+    [FromHeader(Name = "X-Certificado-Base64")] string? certHeader,
+    [FromHeader(Name = "X-Certificado-Senha")] string? senhaHeader,
+    [FromHeader(Name = "X-Cert-Pem-Base64")] string? certPemHeader,
+    [FromHeader(Name = "X-Key-Pem-Base64")] string? keyPemHeader,
+    INfeEventoService eventoService,
+    CancellationToken ct) =>
+{
+    var certResult = PrepararCertificadoConsulta(certHeader, senhaHeader, certPemHeader, keyPemHeader);
+    if (!certResult.IsSuccess)
+    {
+        return Results.BadRequest(new { Error = certResult.ErrorMessage });
+    }
+
+    var cert = certResult.Value!;
+    var res = await eventoService.InutilizarAsync(
+        request,
+        cert.CertificadoBase64,
+        cert.Senha,
+        certPemHeader,
+        keyPemHeader,
+        ct);
+
     return res.IsSuccess ? Results.Ok(res.Value) : Results.UnprocessableEntity(res);
 });
 
