@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.3 - 2026-06-28
+
+- Fixadas por SHA as GitHub Actions usadas nos workflows de CI, publicação e Scorecard.
+- Fixadas por digest as imagens .NET SDK e ASP.NET Runtime usadas no Dockerfile.
+- Adicionada análise SAST com CodeQL em pushes e pull requests da branch `master`.
+- Reforçada a proteção da branch padrão contra alterações não revisadas e reescrita de histórico.
+- Corrigido o fechamento do leitor de schema XSD após a compilação.
+
 ## 0.3.2 - 2026-06-26
 
 - O endpoint `GET /api/v1/nfe/status-servico` passou a aceitar PEM além de PFX, fechando a validação em homologação com o mesmo fluxo dos demais endpoints.

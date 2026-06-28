@@ -77,7 +77,8 @@ public sealed class NfeXsdValidator
         }
 
         _schemaSet.XmlResolver = new XmlUrlResolver();
-        _schemaSet.Add("http://www.portalfiscal.inf.br/nfe", XmlReader.Create(nfePath));
+        using var schemaReader = XmlReader.Create(nfePath);
+        _schemaSet.Add("http://www.portalfiscal.inf.br/nfe", schemaReader);
         _schemaSet.Compile();
     }
 

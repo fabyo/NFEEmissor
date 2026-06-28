@@ -1,5 +1,5 @@
 # Estágio de build usando o SDK do .NET 10
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:ea8bde36c11b6e7eec2656d0e59101d4462f6bd630730f2c8201ed0572b295d5 AS build
 WORKDIR /app
 
 # Copia os arquivos de solução e projetos para restaurar dependências
@@ -20,7 +20,7 @@ COPY src/ src/
 RUN dotnet publish src/Nfe.Api/Nfe.Api.csproj -c Release -o /app/publish
 
 # Baixa e converte a cadeia ICP-Brasil fora da imagem runtime.
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS icp-certs
+FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:ea8bde36c11b6e7eec2656d0e59101d4462f6bd630730f2c8201ed0572b295d5 AS icp-certs
 
 RUN set -eu; \
     apt-get update; \
@@ -63,7 +63,7 @@ RUN set -eu; \
     rm -rf /tmp/icp.zip /tmp/icp-certs /tmp/lets-encrypt-e7.pem /var/lib/apt/lists/*
 
 # Estágio final usando o ASP.NET Core Runtime (.NET 10)
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:7644f992230d35cf230017189d4038c0ae0f7388b13f4f7ae1900a155bafb597 AS final
 
 # Instala a cadeia ICP-Brasil no trust store do Linux.
 COPY --from=icp-certs /icp-ca/ /usr/local/share/ca-certificates/
