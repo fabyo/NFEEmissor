@@ -23,7 +23,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore
-        run: dotnet restore NfeEmissor.slnx
+        run: dotnet restore NfeEmissor.slnx --locked-mode
 
       - name: Test
         run: dotnet test tests/Nfe.UnitTests/Nfe.UnitTests.csproj --configuration Release --no-restore

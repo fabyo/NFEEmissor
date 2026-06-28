@@ -5,13 +5,16 @@ WORKDIR /app
 # Copia os arquivos de solução e projetos para restaurar dependências
 COPY NfeEmissor.slnx ./
 COPY src/Nfe.Shared/Nfe.Shared.csproj src/Nfe.Shared/
+COPY src/Nfe.Shared/packages.lock.json src/Nfe.Shared/
 COPY src/Nfe.Core/Nfe.Core.csproj src/Nfe.Core/
+COPY src/Nfe.Core/packages.lock.json src/Nfe.Core/
 COPY src/Nfe.Api/Nfe.Api.csproj src/Nfe.Api/
+COPY src/Nfe.Api/packages.lock.json src/Nfe.Api/
 COPY src/Nfe.Cli/Nfe.Cli.csproj src/Nfe.Cli/
 COPY tests/Nfe.UnitTests/Nfe.UnitTests.csproj tests/Nfe.UnitTests/
 
 # Restaura dependências (buscando do NuGet público de forma limpa)
-RUN dotnet restore src/Nfe.Api/Nfe.Api.csproj
+RUN dotnet restore src/Nfe.Api/Nfe.Api.csproj --locked-mode
 
 # Copia o restante do código do emissor
 COPY src/ src/
