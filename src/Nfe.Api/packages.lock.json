@@ -4,25 +4,25 @@
     "net10.0": {
       "NFEConsulta": {
         "type": "Direct",
-        "requested": "[0.3.0, )",
-        "resolved": "0.3.0",
-        "contentHash": "t1VVu+vnCm3Xapsm5nb7sBkIkTYB86CeNM5KI8fpn3E8nnXuuUPLcInbUqn0Oo02PeS58wy0aYaZ2Rlm6O0csA=="
+        "requested": "[0.4.2, )",
+        "resolved": "0.4.2",
+        "contentHash": "GfTA1r1FLMQSn/C04bT7mNyR56CAG1BemIE1f4FyH21tJxxsXwGQy95zpjFJrtXGs2B3Y+c9xGiuPyVV82uzkA=="
       },
       "NFEDanfe": {
         "type": "Direct",
-        "requested": "[0.1.22, )",
-        "resolved": "0.1.22",
-        "contentHash": "aENxvRjgbQREEiMjweQI4nkkicaZVUGBBTNNc7swHejoIR6csF+hDgjl12EKcnI4c5i5sr4/5ndbpii1YKYIgg==",
+        "requested": "[2.3.0, )",
+        "resolved": "2.3.0",
+        "contentHash": "7aZ75I7bw/WQgezAMZQVycHSZjcP4hpdkru1URb/Z8KKSKLkP2bAdFDRiJR9YY/IlQdpPMtDbbTozF8I2piefA==",
         "dependencies": {
           "Barcoder": "3.0.0",
-          "QuestPDF": "2026.6.0"
+          "PDFsharp": "6.2.4"
         }
       },
       "NFeSchemaDownloader": {
         "type": "Direct",
-        "requested": "[0.2.3, )",
-        "resolved": "0.2.3",
-        "contentHash": "ZnKV6XfGwzfMRAyjvBLLXXDzGjTMwwf4S6q2W90zao0hD42GqenSjq00P2CMGcTpROZIZD3C8Ds/868FzFI5bQ==",
+        "requested": "[0.2.6, )",
+        "resolved": "0.2.6",
+        "contentHash": "QSDC11zFpvp45i19x2VmfKOj/jBFo6/Ia2Na8vjIpiAA0YegruY+adTkpSYHEXUtDK91S0pdyW5dzM3WZa3JAg==",
         "dependencies": {
           "Microsoft.Playwright": "1.60.0"
         }
@@ -54,11 +54,11 @@
       },
       "StackExchange.Redis": {
         "type": "Direct",
-        "requested": "[3.0.7, )",
-        "resolved": "3.0.7",
-        "contentHash": "zKgns9+fcwAHVXxJvWMw6m252KYC6t0/vyuUE1bVjhzoWzVnld1NyBgpskuYZ+SQ0z13Uxsn+BHuEPDSvSqwxg==",
+        "requested": "[3.0.11, )",
+        "resolved": "3.0.11",
+        "contentHash": "aLUOeQ3hpTg1H7AT6nVS3Roy8lKPsTG7VIEhspT5sNXWqcKbYJo1ytx8JqTNEWmnl/Ou/LwrDJntbl2P32IGcQ==",
         "dependencies": {
-          "RESPite": "3.0.7",
+          "RESPite": "3.0.11",
           "System.IO.Hashing": "10.0.5"
         }
       },
@@ -130,6 +130,14 @@
           "System.ComponentModel.Annotations": "5.0.0"
         }
       },
+      "PDFsharp": {
+        "type": "Transitive",
+        "resolved": "6.2.4",
+        "contentHash": "GhTr9F1uOYXHCIEOB5PXIgqn5a8WLsJL2m0eewTA0IvY1j6N4HGXHKKmEyB90/N6vrjmYamf41V9zbmdW2HY3g==",
+        "dependencies": {
+          "System.Security.Cryptography.Pkcs": "8.0.1"
+        }
+      },
       "Polly": {
         "type": "Transitive",
         "resolved": "8.7.0",
@@ -151,15 +159,10 @@
           "Polly": "7.1.0"
         }
       },
-      "QuestPDF": {
-        "type": "Transitive",
-        "resolved": "2026.6.0",
-        "contentHash": "0DQY6bGXcFLdj10vXmdMMZqgShQGuy0XvPtkkfntlOmSrtIZTBmlLFQilg3OK/V9c6hlyqus+g6PKm5YexEZ0A=="
-      },
       "RESPite": {
         "type": "Transitive",
-        "resolved": "3.0.7",
-        "contentHash": "uBspFEns2SIoDden0355joj34sD3xoSDKmRiyqkAA7neb9N/rPQW/JkZ98uEjd50ZilaXH9b51MxSoW2rLIq/A=="
+        "resolved": "3.0.11",
+        "contentHash": "txORk48Kw4utEaKHD5AWyfsxj7ZTb8EuJM9RaQjPg0pt0YxjBHgFEohE4bia0o3Ik1F5MhoayaUy3hYvcsb5Ng=="
       },
       "Serilog": {
         "type": "Transitive",
@@ -254,6 +257,11 @@
         "type": "Transitive",
         "resolved": "10.0.5",
         "contentHash": "8IBJWcCT9+e4Bmevm4T7+fQEiAh133KGiz4oiVTgJckd3Q76OFdR1falgn9lpz7+C4HJvogCDJeAa2QmvbeVtg=="
+      },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Transitive",
+        "resolved": "8.0.1",
+        "contentHash": "CoCRHFym33aUSf/NtWSVSZa99dkd0Hm7OCZUxORBjRB16LNhIEOf8THPqzIYlvKM0nNDAPTRBa1FxEECrgaxxA=="
       },
       "NFEEmissor": {
         "type": "Project",
