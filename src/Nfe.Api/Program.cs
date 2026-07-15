@@ -11,11 +11,8 @@ using Nfe.Api.Services;
 using Nfe.Core;
 using Nfe.Shared;
 using NFeSchemaDownloader;
-using QuestPDF.Infrastructure;
 using Serilog;
 using StackExchange.Redis;
-
-ConfigurarLicencaQuestPdf();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -412,11 +409,6 @@ await app.RunAsync();
 
 static string ObterSefazBackoffKey(string uf, string ambiente)
     => $"nfe-sefaz-backoff:{uf.ToUpperInvariant()}:{ambiente}";
-
-static void ConfigurarLicencaQuestPdf()
-{
-    QuestPDF.Settings.License = LicenseType.Community;
-}
 
 static Result<CertificadoConsulta> PrepararCertificadoConsulta(
     string? certBase64,

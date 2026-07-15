@@ -31,7 +31,6 @@ public sealed class NfeOfflineIntegrationTests
     [Fact]
     public void Danfe_DeveGerarPdfDeProcNFeOfflineSemSefaz()
     {
-        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
         var procNFe = NfeProcBuilder.Montar(CriarXmlNfeAssinadoMinimo(), CriarProtNFe());
 
         using var pdfStream = new MemoryStream();
