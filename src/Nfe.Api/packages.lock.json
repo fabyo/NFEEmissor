@@ -4,25 +4,25 @@
     "net10.0": {
       "NFEConsulta": {
         "type": "Direct",
-        "requested": "[0.3.0, )",
-        "resolved": "0.3.0",
-        "contentHash": "t1VVu+vnCm3Xapsm5nb7sBkIkTYB86CeNM5KI8fpn3E8nnXuuUPLcInbUqn0Oo02PeS58wy0aYaZ2Rlm6O0csA=="
+        "requested": "[0.4.2, )",
+        "resolved": "0.4.2",
+        "contentHash": "GfTA1r1FLMQSn/C04bT7mNyR56CAG1BemIE1f4FyH21tJxxsXwGQy95zpjFJrtXGs2B3Y+c9xGiuPyVV82uzkA=="
       },
       "NFEDanfe": {
         "type": "Direct",
-        "requested": "[0.1.22, )",
-        "resolved": "0.1.22",
-        "contentHash": "aENxvRjgbQREEiMjweQI4nkkicaZVUGBBTNNc7swHejoIR6csF+hDgjl12EKcnI4c5i5sr4/5ndbpii1YKYIgg==",
+        "requested": "[2.3.4, )",
+        "resolved": "2.3.4",
+        "contentHash": "txZtoTTFveDQURV2wkg9mUpXO++H6MPvT+tIGhWRhSORDlmt/eZgzb8mt/VNXYp3pBUocG+Oi9vwN8IM45brmQ==",
         "dependencies": {
           "Barcoder": "3.0.0",
-          "QuestPDF": "2026.6.0"
+          "PDFsharp": "6.2.4"
         }
       },
       "NFeSchemaDownloader": {
         "type": "Direct",
-        "requested": "[0.2.3, )",
-        "resolved": "0.2.3",
-        "contentHash": "ZnKV6XfGwzfMRAyjvBLLXXDzGjTMwwf4S6q2W90zao0hD42GqenSjq00P2CMGcTpROZIZD3C8Ds/868FzFI5bQ==",
+        "requested": "[0.2.6, )",
+        "resolved": "0.2.6",
+        "contentHash": "QSDC11zFpvp45i19x2VmfKOj/jBFo6/Ia2Na8vjIpiAA0YegruY+adTkpSYHEXUtDK91S0pdyW5dzM3WZa3JAg==",
         "dependencies": {
           "Microsoft.Playwright": "1.60.0"
         }
@@ -54,11 +54,11 @@
       },
       "StackExchange.Redis": {
         "type": "Direct",
-        "requested": "[3.0.7, )",
-        "resolved": "3.0.7",
-        "contentHash": "zKgns9+fcwAHVXxJvWMw6m252KYC6t0/vyuUE1bVjhzoWzVnld1NyBgpskuYZ+SQ0z13Uxsn+BHuEPDSvSqwxg==",
+        "requested": "[3.0.17, )",
+        "resolved": "3.0.17",
+        "contentHash": "ItAm9lokZ1mWsQLF3u4Yw4eb/gvkX6Rp9bLAe1KUKgKAjPkALoQwTc6jJLtBZoOv9LT7RwvSIXZZb9FF30QhOg==",
         "dependencies": {
-          "RESPite": "3.0.7",
+          "RESPite": "3.0.17",
           "System.IO.Hashing": "10.0.5"
         }
       },
@@ -109,8 +109,8 @@
       },
       "Microsoft.Extensions.Http.Polly": {
         "type": "Transitive",
-        "resolved": "10.0.9",
-        "contentHash": "bwfSg08DwmF6sR3HMLBLklxfHSoIgQFTsBqY+omxbNqVDPtjoGiWqMcZ5r+gSXRNEaptsXdVeN3QwHAKPspB+w==",
+        "resolved": "10.0.10",
+        "contentHash": "ceKyX9V/C+mtapMfXQ0ClKRkxDHAW2AAJoDgTcsh7UdOteCQKB5wRTFgHJ82Lh/3O+UlPA47LRGEZkRxtz/lCA==",
         "dependencies": {
           "Polly": "7.2.4",
           "Polly.Extensions.Http": "3.0.0"
@@ -128,6 +128,14 @@
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "6.0.0",
           "System.ComponentModel.Annotations": "5.0.0"
+        }
+      },
+      "PDFsharp": {
+        "type": "Transitive",
+        "resolved": "6.2.4",
+        "contentHash": "GhTr9F1uOYXHCIEOB5PXIgqn5a8WLsJL2m0eewTA0IvY1j6N4HGXHKKmEyB90/N6vrjmYamf41V9zbmdW2HY3g==",
+        "dependencies": {
+          "System.Security.Cryptography.Pkcs": "8.0.1"
         }
       },
       "Polly": {
@@ -151,15 +159,10 @@
           "Polly": "7.1.0"
         }
       },
-      "QuestPDF": {
-        "type": "Transitive",
-        "resolved": "2026.6.0",
-        "contentHash": "0DQY6bGXcFLdj10vXmdMMZqgShQGuy0XvPtkkfntlOmSrtIZTBmlLFQilg3OK/V9c6hlyqus+g6PKm5YexEZ0A=="
-      },
       "RESPite": {
         "type": "Transitive",
-        "resolved": "3.0.7",
-        "contentHash": "uBspFEns2SIoDden0355joj34sD3xoSDKmRiyqkAA7neb9N/rPQW/JkZ98uEjd50ZilaXH9b51MxSoW2rLIq/A=="
+        "resolved": "3.0.17",
+        "contentHash": "68slEMyRTUNLc75DruEDsEohFmFfNwkHLLtwQ46bobF+8Tl+UXMKM1kM87ihhKy6JdAqy1RrvAfvBWeLmcY9Gg=="
       },
       "Serilog": {
         "type": "Transitive",
@@ -255,11 +258,16 @@
         "resolved": "10.0.5",
         "contentHash": "8IBJWcCT9+e4Bmevm4T7+fQEiAh133KGiz4oiVTgJckd3Q76OFdR1falgn9lpz7+C4HJvogCDJeAa2QmvbeVtg=="
       },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Transitive",
+        "resolved": "8.0.1",
+        "contentHash": "CoCRHFym33aUSf/NtWSVSZa99dkd0Hm7OCZUxORBjRB16LNhIEOf8THPqzIYlvKM0nNDAPTRBa1FxEECrgaxxA=="
+      },
       "NFEEmissor": {
         "type": "Project",
         "dependencies": {
           "FluentValidation.DependencyInjectionExtensions": "[12.1.1, )",
-          "Microsoft.Extensions.Http.Polly": "[10.0.9, )",
+          "Microsoft.Extensions.Http.Polly": "[10.0.10, )",
           "Polly": "[8.7.0, )"
         }
       }
