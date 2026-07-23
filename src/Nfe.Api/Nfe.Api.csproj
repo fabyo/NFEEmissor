@@ -5,12 +5,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NFEDanfe" Version="0.1.22" />
-    <PackageReference Include="NFeSchemaDownloader" Version="0.2.3" />
-    <PackageReference Include="NFEConsulta" Version="0.3.0" />
+    <PackageReference Include="NFEDanfe" Version="2.3.4" />
+    <PackageReference Include="NFeSchemaDownloader" Version="0.2.6" />
+    <PackageReference Include="NFEConsulta" Version="1.0.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.Seq" Version="9.1.0" />
-    <PackageReference Include="StackExchange.Redis" Version="3.0.7" />
+    <PackageReference Include="StackExchange.Redis" Version="3.0.17" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
