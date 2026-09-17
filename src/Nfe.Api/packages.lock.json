@@ -4,25 +4,25 @@
     "net10.0": {
       "NFEConsulta": {
         "type": "Direct",
-        "requested": "[0.3.0, )",
-        "resolved": "0.3.0",
-        "contentHash": "t1VVu+vnCm3Xapsm5nb7sBkIkTYB86CeNM5KI8fpn3E8nnXuuUPLcInbUqn0Oo02PeS58wy0aYaZ2Rlm6O0csA=="
+        "requested": "[1.0.1, )",
+        "resolved": "1.0.1",
+        "contentHash": "rsjwx6iMRW/DdJqtRqe6pPSNWpems39nHxMu06erghO2BTSH1hIkSmEp4m/9O+4BjWZKuju+dZpTfnhzPCLSyA=="
       },
       "NFEDanfe": {
         "type": "Direct",
-        "requested": "[0.1.22, )",
-        "resolved": "0.1.22",
-        "contentHash": "aENxvRjgbQREEiMjweQI4nkkicaZVUGBBTNNc7swHejoIR6csF+hDgjl12EKcnI4c5i5sr4/5ndbpii1YKYIgg==",
+        "requested": "[2.3.6, )",
+        "resolved": "2.3.6",
+        "contentHash": "c2yZXtk5QCNk312xwJVYe89YOQm5RMN8Y3tncoUqx2lcKp5lW/YhhTweZ6IX7ePSnTx7zfsd7vox27PGuV63Ag==",
         "dependencies": {
           "Barcoder": "3.0.0",
-          "QuestPDF": "2026.6.0"
+          "PDFsharp": "6.2.4"
         }
       },
       "NFeSchemaDownloader": {
         "type": "Direct",
-        "requested": "[0.2.3, )",
-        "resolved": "0.2.3",
-        "contentHash": "ZnKV6XfGwzfMRAyjvBLLXXDzGjTMwwf4S6q2W90zao0hD42GqenSjq00P2CMGcTpROZIZD3C8Ds/868FzFI5bQ==",
+        "requested": "[0.2.6, )",
+        "resolved": "0.2.6",
+        "contentHash": "QSDC11zFpvp45i19x2VmfKOj/jBFo6/Ia2Na8vjIpiAA0YegruY+adTkpSYHEXUtDK91S0pdyW5dzM3WZa3JAg==",
         "dependencies": {
           "Microsoft.Playwright": "1.60.0"
         }
@@ -54,12 +54,12 @@
       },
       "StackExchange.Redis": {
         "type": "Direct",
-        "requested": "[3.0.7, )",
-        "resolved": "3.0.7",
-        "contentHash": "zKgns9+fcwAHVXxJvWMw6m252KYC6t0/vyuUE1bVjhzoWzVnld1NyBgpskuYZ+SQ0z13Uxsn+BHuEPDSvSqwxg==",
+        "requested": "[3.2.15, )",
+        "resolved": "3.2.15",
+        "contentHash": "QBlh1av9iQSRCRSTyVUXPj3TDaYLCVV3IfVnL7XEsCuwUsxHQ3pCgPmnVFiIBKZSfkmQRn5wPD75/Ix5dZ2Ucw==",
         "dependencies": {
-          "RESPite": "3.0.7",
-          "System.IO.Hashing": "10.0.5"
+          "RESPite": "3.2.15",
+          "System.IO.Hashing": "10.0.12"
         }
       },
       "Swashbuckle.AspNetCore": {
@@ -109,8 +109,8 @@
       },
       "Microsoft.Extensions.Http.Polly": {
         "type": "Transitive",
-        "resolved": "10.0.9",
-        "contentHash": "bwfSg08DwmF6sR3HMLBLklxfHSoIgQFTsBqY+omxbNqVDPtjoGiWqMcZ5r+gSXRNEaptsXdVeN3QwHAKPspB+w==",
+        "resolved": "10.0.12",
+        "contentHash": "guggIopNFSFyQSr+9xc66cjr9ohls5/312T/vRsAryh+NYsqo2f9BxMElEYkOxw8QPqK7/Lo8emi2NDnqo6w4Q==",
         "dependencies": {
           "Polly": "7.2.4",
           "Polly.Extensions.Http": "3.0.0"
@@ -130,18 +130,26 @@
           "System.ComponentModel.Annotations": "5.0.0"
         }
       },
+      "PDFsharp": {
+        "type": "Transitive",
+        "resolved": "6.2.4",
+        "contentHash": "GhTr9F1uOYXHCIEOB5PXIgqn5a8WLsJL2m0eewTA0IvY1j6N4HGXHKKmEyB90/N6vrjmYamf41V9zbmdW2HY3g==",
+        "dependencies": {
+          "System.Security.Cryptography.Pkcs": "8.0.1"
+        }
+      },
       "Polly": {
         "type": "Transitive",
-        "resolved": "8.7.0",
-        "contentHash": "0qR4f0OR8FeCAfLWcfwzAM7w6EmpUgwa22PgxKjcL25dEAto7sKpQQXbtxp38vVvK+V3RFkh/TeI7g/iUdoYIQ==",
+        "resolved": "8.8.0",
+        "contentHash": "1/jm0wQA0hjcY8OcGx2HLzj4Tx33IpmEWWPUcekt07V7VO8suAUmeDRD7VM5wy9614pJMI2M0TB1pwKVflh4CQ==",
         "dependencies": {
-          "Polly.Core": "8.7.0"
+          "Polly.Core": "8.8.0"
         }
       },
       "Polly.Core": {
         "type": "Transitive",
-        "resolved": "8.7.0",
-        "contentHash": "BS2t+nsBer16PIebCEPNBK5fgMisADQyRCd7K+BgkMWpFmSaiYE+rVVNpFhGRqUkJmNSLmw0uCNzHHWfgml28Q=="
+        "resolved": "8.8.0",
+        "contentHash": "TewV9uNFsoRFggoFbTAGFwsMYPuckA+wTIpQPyhLL9BANRPQRENz2S4bwATrB3HBOakN5oKLFIllPiDnVecmJg=="
       },
       "Polly.Extensions.Http": {
         "type": "Transitive",
@@ -151,15 +159,10 @@
           "Polly": "7.1.0"
         }
       },
-      "QuestPDF": {
-        "type": "Transitive",
-        "resolved": "2026.6.0",
-        "contentHash": "0DQY6bGXcFLdj10vXmdMMZqgShQGuy0XvPtkkfntlOmSrtIZTBmlLFQilg3OK/V9c6hlyqus+g6PKm5YexEZ0A=="
-      },
       "RESPite": {
         "type": "Transitive",
-        "resolved": "3.0.7",
-        "contentHash": "uBspFEns2SIoDden0355joj34sD3xoSDKmRiyqkAA7neb9N/rPQW/JkZ98uEjd50ZilaXH9b51MxSoW2rLIq/A=="
+        "resolved": "3.2.15",
+        "contentHash": "YdUqhnCR0RKnkwVGCYqLl0vWDV7nvkcJkX7kM/DsJuUB84+GAtYHziDWxYxMi1IjqEvrfBkD8cqgto0mYTt6ow=="
       },
       "Serilog": {
         "type": "Transitive",
@@ -252,15 +255,20 @@
       },
       "System.IO.Hashing": {
         "type": "Transitive",
-        "resolved": "10.0.5",
-        "contentHash": "8IBJWcCT9+e4Bmevm4T7+fQEiAh133KGiz4oiVTgJckd3Q76OFdR1falgn9lpz7+C4HJvogCDJeAa2QmvbeVtg=="
+        "resolved": "10.0.12",
+        "contentHash": "jDix4bBMYnpZdSPcnY+KDV6ik3SRMzpMKby/bZl/XUwIiflwRNAFZ0oOl61R/pSaveIJ8t1gs2BUlrGsPs/bcg=="
+      },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Transitive",
+        "resolved": "8.0.1",
+        "contentHash": "CoCRHFym33aUSf/NtWSVSZa99dkd0Hm7OCZUxORBjRB16LNhIEOf8THPqzIYlvKM0nNDAPTRBa1FxEECrgaxxA=="
       },
       "NFEEmissor": {
         "type": "Project",
         "dependencies": {
           "FluentValidation.DependencyInjectionExtensions": "[12.1.1, )",
-          "Microsoft.Extensions.Http.Polly": "[10.0.9, )",
-          "Polly": "[8.7.0, )"
+          "Microsoft.Extensions.Http.Polly": "[10.0.12, )",
+          "Polly": "[8.8.0, )"
         }
       }
     }
